@@ -1480,7 +1480,7 @@ void retro_get_system_info(struct retro_system_info *info)
    info->library_name     = "PX68K";
    info->library_version  = PX68K_VERSION GIT_VERSION;
    info->need_fullpath    = true;
-   info->valid_extensions = "dim|zip|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u";
+   info->valid_extensions = "dim|img|d88|88d|hdm|dup|2hd|xdf|hdf|cmd|m3u";
    info->block_extract    = false;
 }
 

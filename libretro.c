@@ -317,14 +317,14 @@ int midi_out_open(void **phmo)
    return 1;
 }
 
-static void update_variable_midi_interface(void)
+static void update_variable_midi_interface(int running)
 {
    struct retro_variable var;
 
    var.key = "px68k_midi_output";
    var.value = NULL;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (!running && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "disabled"))
          Config.MIDI_SW = 0;
@@ -1171,8 +1171,7 @@ static void update_variables(int running)
    char key[256] = {0};
    struct retro_variable var = {0};
 
-   if (!running)
-      update_variable_midi_interface();
+   update_variable_midi_interface(running);
 
    strcpy(key, "px68k_joytype");
    var.key = key;

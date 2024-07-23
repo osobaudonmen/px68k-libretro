@@ -294,7 +294,6 @@ void midi_out_short_msg(size_t msg)
       midi_cb.write(msg         & 0xFF, 0); /* status byte */
       midi_cb.write((msg >> 8)  & 0xFF, 0); /* note no. */
       midi_cb.write((msg >> 16) & 0xFF, 0); /* velocity */
-      midi_cb.write((msg >> 24) & 0xFF, 0); /* none */
    }
 }
 

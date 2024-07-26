@@ -91,8 +91,8 @@ static uint8_t EXCV_GSRESET[] = { 0xf0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7f
 static uint8_t EXCV_XGRESET[] = { 0xf0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xf7};
 
 #define	MIDICTRL_READY		0
-#define	MIDICTRL_2uint8_tS	1
-#define	MIDICTRL_3uint8_tS	2
+#define	MIDICTRL_2BYTES	    1
+#define	MIDICTRL_3BYTES	    2
 #define	MIDICTRL_EXCLUSIVE	3
 #define	MIDICTRL_TIMECODE	4
 #define MIDICTRL_SYSTEM		5
@@ -189,7 +189,7 @@ static void MIDI_Sendexclusive(uint8_t *excv, size_t length)
 }
 
 /*
- *   りせっと〜
+ *   りせっと~
  */
 void MIDI_Reset(void)
 {
@@ -273,7 +273,7 @@ void MIDI_Message(uint8_t mes)
 		case MIDI_CONTINUE:
 		case MIDI_STOP:
 		case MIDI_ACTIVESENSE:
-		case MIDI_SYSTEMRESET: /* 一応イリーガル〜 */
+		case MIDI_SYSTEMRESET: /* 一応イリーガル~ */
 			return;
 	}
 
@@ -284,7 +284,7 @@ void MIDI_Message(uint8_t mes)
 			switch(mes & 0xf0) {
 				case 0xc0:
 				case 0xd0:
-					MIDI_CTRL = MIDICTRL_2uint8_tS;
+					MIDI_CTRL = MIDICTRL_2BYTES;
 					break;
 				case 0x80:
 				case 0x90:
@@ -293,7 +293,7 @@ void MIDI_Message(uint8_t mes)
 				case 0xe0:
 					MIDI_LAST = mes;
 					/* この方が失敗しないなり… */
-					MIDI_CTRL = MIDICTRL_3uint8_tS;
+					MIDI_CTRL = MIDICTRL_3BYTES;
 					break;
 				default:
 					switch(mes) {
@@ -326,7 +326,7 @@ void MIDI_Message(uint8_t mes)
 			/* running status */
 			MIDI_BUF[0] = MIDI_LAST;
 			MIDI_POS    = 1;
-			MIDI_CTRL   = MIDICTRL_3uint8_tS;
+			MIDI_CTRL   = MIDICTRL_3BYTES;
 		}
 	}
 	else if ( (mes&0x80) && ((MIDI_CTRL!=MIDICTRL_EXCLUSIVE)||(mes!=MIDI_EOX)) )
@@ -338,7 +338,7 @@ void MIDI_Message(uint8_t mes)
 		{
 			case 0xc0:
 			case 0xd0:
-				MIDI_CTRL = MIDICTRL_2uint8_tS;
+				MIDI_CTRL = MIDICTRL_2BYTES;
 				break;
 			case 0x80:
 			case 0x90:
@@ -346,7 +346,7 @@ void MIDI_Message(uint8_t mes)
 			case 0xb0:
 			case 0xe0:
 				MIDI_LAST = mes; /* この方が失敗しないなり… */
-				MIDI_CTRL = MIDICTRL_3uint8_tS;
+				MIDI_CTRL = MIDICTRL_3BYTES;
 				break;
 			default:
 				switch(mes) {
@@ -379,7 +379,7 @@ void MIDI_Message(uint8_t mes)
 
 	switch(MIDI_CTRL)
 	{
-		case MIDICTRL_2uint8_tS:
+		case MIDICTRL_2BYTES:
 			if (MIDI_POS >= 2)
 			{
 				if (ENABLE_TONEMAP)
@@ -392,7 +392,7 @@ void MIDI_Message(uint8_t mes)
 				MIDI_CTRL = MIDICTRL_READY;
 			}
 			break;
-		case MIDICTRL_3uint8_tS:
+		case MIDICTRL_3BYTES:
 			if (MIDI_POS >= 3)
 			{
 				midi_out_short_msg( 

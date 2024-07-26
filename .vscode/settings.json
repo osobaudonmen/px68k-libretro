@@ -1,8 +1,0 @@
-{
-    "C_Cpp.default.defines": [
-        "__LIBRETRO__",
-        "HAVE_MT32",
-        "PULSEAUDIO",
-        "HAVE_FLUID"
-    ]
-}

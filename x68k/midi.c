@@ -91,8 +91,8 @@ static uint8_t EXCV_GSRESET[] = { 0xf0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7f
 static uint8_t EXCV_XGRESET[] = { 0xf0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00, 0xf7};
 
 #define	MIDICTRL_READY		0
-#define	MIDICTRL_2BYTES	    1
-#define	MIDICTRL_3BYTES	    2
+#define	MIDICTRL_2BYTES		1
+#define	MIDICTRL_3BYTES		2
 #define	MIDICTRL_EXCLUSIVE	3
 #define	MIDICTRL_TIMECODE	4
 #define MIDICTRL_SYSTEM		5
@@ -102,11 +102,11 @@ static uint8_t EXCV_XGRESET[] = { 0xf0, 0x43, 0x10, 0x4C, 0x00, 0x00, 0x7E, 0x00
 #define MIDI_SONGPOS		0xf2
 #define MIDI_SONGSELECT		0xf3
 #define	MIDI_TUNEREQUEST	0xf6
-#define	MIDI_EOX		0xf7
-#define	MIDI_TIMING		0xf8
-#define MIDI_START		0xfa
+#define	MIDI_EOX			0xf7
+#define	MIDI_TIMING			0xf8
+#define MIDI_START			0xfa
 #define MIDI_CONTINUE		0xfb
-#define	MIDI_STOP		0xfc
+#define	MIDI_STOP			0xfc
 #define	MIDI_ACTIVESENSE	0xfe
 #define	MIDI_SYSTEMRESET	0xff
 

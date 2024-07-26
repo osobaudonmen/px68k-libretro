@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#ifdef HAVE_C68k
+#ifdef HAVE_C68K
 #include "/m68000/c68k/core.h"
 #endif
 

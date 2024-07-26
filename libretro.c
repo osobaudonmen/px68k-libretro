@@ -978,7 +978,7 @@ static int pmain(int argc, char *argv[])
    ADPCM_Init();
    OPM_Init(4000000/*3579545*/);
 #ifndef	NO_MERCURY
-   Mcry_Init(44100, winx68k_dir);
+   Mcry_Init(winx68k_dir);
 #endif
 
    FDD_Init();

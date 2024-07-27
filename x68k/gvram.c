@@ -40,7 +40,6 @@ void GVRAM_Init(void)
 	}
 }
 
-
 /*
  *  ¿¿®¿¿¿¿¿¿¿¿¿¿¿
  */
@@ -49,26 +48,36 @@ void FASTCALL GVRAM_FastClear(void)
 {
 	uint32_t v = ((CRTC_Regs[0x29]&4)?512:256);
 	uint32_t h = ((CRTC_Regs[0x29]&3)?512:256);
-	/* ¿¿ä¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿ */
-{
+
 	uint16_t *p;
-	uint32_t x, y;
-	uint32_t offy = (GrphScrollY[0] & 0x1ff) << 10;
+	uint32_t x, y, offset;
 
-	for (y = 0; y < v; ++y) {
-		uint32_t offx = GrphScrollX[0] & 0x1ff;
-		p = (uint16_t *)(GVRAM + offy + offx * 2);
+	uint32_t w[2];
 
-		for (x = 0; x < h; ++x) {
+	w[0] = h;
+	w[1] = 0;
+
+	if (((GrphScrollX[0] & 0x1ff) + w[0]) > 512) {
+		w[1] = (GrphScrollX[0] & 0x1ff) + w[0] - 512;
+		w[0] = 512 - (GrphScrollX[0] & 0x1ff);
+	}
+
+	for (y = 0; y < v; y++) {
+		offset = ((y + GrphScrollY[0]) & 0x1ff) << 10;
+		p = (uint16_t *)(GVRAM + offset + ((GrphScrollX[0] & 0x1ff) * 2));
+
+		for (x = 0; x < w[0]; x++) {
 			*p++ &= CRTC_FastClrMask;
-			offx = (offx + 1) & 0x1ff;
 		}
 
-		offy = (offy + 0x400) & 0x7fc00;
+		if (w[1] > 0) {
+			p = (uint16_t *)(GVRAM + offset);
+			for (x = 0; x < w[1]; x++) {
+				*p++ &= CRTC_FastClrMask;
+			}
+		}
 	}
 }
-}
-
 
 /*
  *   VRAM Read

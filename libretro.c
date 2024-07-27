@@ -286,6 +286,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
 #include "libretro/mmsystem.h"
 static int libretro_supports_midi_output = 0;
 static struct retro_midi_interface midi_cb = { 0 };
+static bool libretro_supports_option_categories = 0;
 
 void midi_out_short_msg(size_t msg)
 {
@@ -977,7 +978,7 @@ static int pmain(int argc, char *argv[])
    ADPCM_Init();
    OPM_Init(4000000/*3579545*/);
 #ifndef	NO_MERCURY
-   Mcry_Init(44100, winx68k_dir);
+   Mcry_Init(winx68k_dir);
 #endif
 
    FDD_Init();
@@ -1162,7 +1163,9 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
    cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &nocontent);
-   libretro_set_core_options(environ_cb);
+
+   libretro_supports_option_categories = 0;
+   libretro_set_core_options(cb, &libretro_supports_option_categories);
 }
 
 static void update_variables(int running)
@@ -1663,8 +1666,9 @@ void retro_deinit(void)
    WinDraw_Cleanup();
 
    SaveConfig();
-   libretro_supports_input_bitmasks = 0;
-   libretro_supports_midi_output    = 0;
+   libretro_supports_input_bitmasks    = 0;
+   libretro_supports_midi_output       = 0;
+   libretro_supports_option_categories = 0;
 }
 
 void retro_reset(void)

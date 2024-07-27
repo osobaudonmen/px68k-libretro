@@ -311,7 +311,7 @@ void WinDraw_DrawLine(void)
 {
 	int opaq, ton=0, gon=0, bgon=0, tron=0, pron=0, tdrawed=0;
 
-	if(VLINE==-1)
+	if(VLINE==(uint32_t)-1)
 		return;
 	if (!TextDirtyLine[VLINE])
 		return;

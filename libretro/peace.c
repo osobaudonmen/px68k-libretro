@@ -40,7 +40,7 @@
 #include <unistd.h>
 #endif
 
-#include "windows.h"
+#include "common.h"
 
 /*-----
  *

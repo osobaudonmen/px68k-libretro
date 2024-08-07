@@ -9,6 +9,9 @@
 #include <libretro.h>
 #include <libretro_core_options.h>
 #include <string/stdstring.h>
+#ifdef USE_LIBRETRO_VFS
+#include <streams/file_stream_transforms.h>
+#endif
 
 #include "libretro/winx68k.h"
 #include "libretro/dosio.h"
@@ -152,6 +155,9 @@ retro_input_state_t input_state_cb;
 retro_audio_sample_t audio_cb;
 retro_audio_sample_batch_t audio_batch_cb;
 retro_log_printf_t log_cb;
+#ifdef USE_LIBRETRO_VFS
+struct retro_vfs_interface_info vfs_iface_info;
+#endif
 
 static unsigned no_content;
 
@@ -720,6 +726,8 @@ static int retro_load_game_internal(const char *argv)
       int res = 0;
       if (handle_extension((char*)argv, "cmd") || handle_extension((char*)argv, "CMD"))
       {
+         int i;
+
          if (!(res = loadcmdfile((char*)argv)))
          {
             if (log_cb)
@@ -728,6 +736,18 @@ static int retro_load_game_internal(const char *argv)
          }
 
          parse_cmdline(CMDFILE);
+
+         /* handle relative paths, append content dir if needed */
+         for (i = 1; i < ARGUC; i++)
+         {
+            if (!is_path_absolute(ARGUV[i]))
+            {
+               char tmp[2048] = { 0 };
+               strcpy(tmp, ARGUV[i]);
+               ARGUV[i][0] = '\0';
+               sprintf(ARGUV[i], "%s%c%s", base_dir, SLASH, tmp);
+            }
+         }
       }
       else if (handle_extension((char*)argv, "m3u") || handle_extension((char*)argv, "M3U"))
       {
@@ -1166,6 +1186,19 @@ void retro_set_environment(retro_environment_t cb)
 
    libretro_supports_option_categories = 0;
    libretro_set_core_options(cb, &libretro_supports_option_categories);
+
+#ifdef USE_LIBRETRO_VFS
+   {
+      vfs_iface_info.required_interface_version = 1;
+      vfs_iface_info.iface                      = NULL;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_iface_info))
+      {
+         filestream_vfs_init(&vfs_iface_info);
+	      path_vfs_init(&vfs_iface_info);
+         dirent_vfs_init(&vfs_iface_info);
+      }
+   }
+#endif
 }
 
 static void update_variables(int running)

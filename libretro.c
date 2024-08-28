@@ -605,11 +605,11 @@ static void parse_cmdline(const char *argv)
             /* we're in a double quoted string, so keep going until we hit a close " */
             if (c == '"')
             {
-               /* word goes from start_of_word to p-1 
+               /* word goes from start_of_word to p-1
                 *... do something with the word ... */
                for (c2 = 0, p2 = start_of_word; p2 < p; p2++, c2++)
                   ARGUV[ARGUC][c2] = (unsigned char) *p2;
-               
+
                ARGUC++;
 
                state = DULL; /* back to "not in word, not in string" state */
@@ -869,7 +869,7 @@ static int WinX68k_LoadROMs(void)
 	file_close(fp);
 
    /* if SCSI IPL, SCSI BIOS is established around $fc0000 */
-	WinX68k_SCSICheck();	
+	WinX68k_SCSICheck();
 
 	for (i = 0; i < 0x40000; i += 2) {
 		tmp = IPL[i];
@@ -992,7 +992,7 @@ static int pmain(int argc, char *argv[])
    }
 
    /* before moving to WinDraw_Init() */
-   Keyboard_Init(); 
+   Keyboard_Init();
    WinDraw_Init();
 
    ADPCM_Init();
@@ -1735,16 +1735,167 @@ static void rumble_frames(void)
    last_read_state = FDD_IsReading;
 }
 
-#define KEYP(a,b) {\
-	if(Core_Key_State[a] && Core_Key_State[a]!=Core_old_Key_State[a]  )\
-		send_keycode(b, 2);\
-	else if ( !Core_Key_State[a] && Core_Key_State[a]!=Core_old_Key_State[a]  )\
-		send_keycode(b, 1);\
-}
+typedef struct {
+   uint16_t lrkey;
+   uint8_t keycode;
+} LRKCNV;
+
+static const LRKCNV KeyTable[] = {
+   { RETROK_ESCAPE,        0x01 }, /* ESC */
+   { RETROK_1,             0x02 }, /* 1 ! */
+   { RETROK_2,             0x03 }, /* 2 " */
+   { RETROK_3,             0x04 }, /* 3 # */
+   { RETROK_4,             0x05 }, /* 4 $ */
+   { RETROK_5,             0x06 }, /* 5 % */
+   { RETROK_6,             0x07 }, /* 6 & */
+   { RETROK_7,             0x08 }, /* 7 ' */
+   { RETROK_8,             0x09 }, /* 8 ( */
+   { RETROK_9,             0x0a }, /* 9 ) */
+   { RETROK_0,             0x0b }, /* 0 _ */
+   { RETROK_MINUS,         0x0c }, /* - = */
+   { RETROK_EQUALS,        0x0d }, /* ^ ~ */
+   { RETROK_BACKSLASH,     0x0e }, /* ¥ | */ /* yen symbol */
+   { RETROK_BACKSPACE,     0x0f }, /* BS */
+
+   { RETROK_TAB,           0x10 }, /* TAB */
+   { RETROK_q,             0x11 }, /* q Q */
+   { RETROK_w,             0x12 }, /* e Q */
+   { RETROK_e,             0x13 }, /* e E */
+   { RETROK_r,             0x14 }, /* r R */
+   { RETROK_t,             0x15 }, /* t T */
+   { RETROK_y,             0x16 }, /* y Y */
+   { RETROK_u,             0x17 }, /* u U */
+   { RETROK_i,             0x18 }, /* i I */
+   { RETROK_o,             0x19 }, /* o O */
+   { RETROK_p,             0x1a }, /* p P */
+   { RETROK_BACKQUOTE,     0x1b }, /* @ ` */
+   { RETROK_LEFTBRACKET,   0x1c }, /*[] ] } */
+   { RETROK_RETURN,        0x1d }, /* RETURN */
+
+   { RETROK_a,             0x1e }, /* a A */
+   { RETROK_s,             0x1f }, /* s S */
+   { RETROK_d,             0x20 }, /* d D */
+   { RETROK_f,             0x21 }, /* f F */
+   { RETROK_g,             0x22 }, /* g G */
+   { RETROK_h,             0x23 }, /* h H */
+   { RETROK_j,             0x24 }, /* j J */
+   { RETROK_k,             0x25 }, /* k K */
+   { RETROK_l,             0x26 }, /* l L */
+   { RETROK_SEMICOLON,     0x27 }, /* ; + */
+   { RETROK_QUOTE,         0x28 }, /* : * */
+   { RETROK_RIGHTBRACKET,  0x29 }, /* [ { */
+
+   { RETROK_z,             0x2a }, /* z Z */
+   { RETROK_x,             0x2b }, /* x X */
+   { RETROK_c,             0x2c }, /* c C */
+   { RETROK_v,             0x2d }, /* v V */
+   { RETROK_b,             0x2e }, /* b B */
+   { RETROK_n,             0x2f }, /* n N */
+   { RETROK_m,             0x30 }, /* m M */
+   { RETROK_COMMA,         0x31 }, /* , < */
+   { RETROK_PERIOD,        0x32 }, /* . > */
+   { RETROK_SLASH,         0x33 }, /* / ? */
+   { RETROK_0,             0x34 }, /* underquote _ as shift+0 which was empty, Japanese
+                                    chars can't overlap as we're not using them */
+
+   { RETROK_SPACE,         0x35 }, /* SPACE */
+   { RETROK_HOME,          0x36 }, /* HOME */
+   { RETROK_DELETE,        0x37 }, /* DEL */
+   { RETROK_PAGEDOWN,      0x38 }, /* ROLL UP */
+   { RETROK_PAGEUP,        0x39 }, /* ROLL DOWN */
+   { RETROK_END,           0x3a }, /* UNDO */
+   { RETROK_LEFT,          0x3b }, /* ← */
+   { RETROK_UP,            0x3c }, /* ↑ */
+   { RETROK_RIGHT,         0x3d }, /* → */
+   { RETROK_DOWN,          0x3e }, /* ↓ */
+
+   { RETROK_CLEAR,         0x3f }, /* CLR */
+   { RETROK_KP_DIVIDE,     0x40 }, /* / */
+   { RETROK_KP_MULTIPLY,   0x41 }, /* * */
+   { RETROK_KP_MINUS,      0x42 }, /* - */
+   { RETROK_KP7,           0x43 }, /* 7 */
+   { RETROK_KP8,           0x44 }, /* 8 */
+   { RETROK_KP9,           0x45 }, /* 9 */
+   { RETROK_KP_PLUS,       0x46 }, /* + */
+   { RETROK_KP4,           0x47 }, /* 4 */
+   { RETROK_KP5,           0x48 }, /* 5 */
+   { RETROK_KP6,           0x49 }, /* 6 */
+   { RETROK_KP_EQUALS,     0x4a }, /* = */
+   { RETROK_KP1,           0x4b }, /* 1 */
+   { RETROK_KP2,           0x4c }, /* 2 */
+   { RETROK_KP3,           0x4d }, /* 3 */
+   { RETROK_KP_ENTER,      0x4e }, /* ENTER */
+   { RETROK_KP0,           0x4f }, /*  */
+#if 0
+   { RETROK_COMMA,0x50 },  /* . > */
+#endif
+   { RETROK_KP_PERIOD,     0x51 }, /* . */
+
+   { RETROK_PRINT,         0x52 }, /* symbol input (kigou) */
+   { RETROK_SCROLLOCK,     0x53 }, /* registration (touroku) */
+   { RETROK_F11,           0x54 }, /* HELP */
+#if 0
+   { NC,                   0x55 }, /* XF1 */
+   { NC,                   0x56 }, /* XF2 */
+   { NC,                   0x57 }, /* XF3 */
+   { NC,                   0x58 }, /* XF4 */
+   { NC,                   0x59 }, /* XF5 */
+
+   { NC,                   0x5a }, /* KANA */
+   { NC,                   0x5b }, /* ROMAN Alphabet */
+   { NC,                   0x5c }, /* Enter code */
+#endif
+   { RETROK_CAPSLOCK,      0x5d }, /* CAPSLOCK */
+
+   { RETROK_INSERT,        0x5e }, /* INSERT */
+#if 0
+   { NC,                   0x5f }, /* Hiragana */
+   { NC,                   0x60 }, /* Full-width */
+#endif
+   { RETROK_BREAK,         0x61 },  /* BREAK */
+   { RETROK_PAUSE,         0x61 },  /* BREAK (allow shift+break combo) */
+#if 0
+   { NC,                   0x62 }, /* COPY */
+#endif
+   { RETROK_F1,            0x63},  /* F1 */
+   { RETROK_F2,            0x64},  /* F2 */
+   { RETROK_F3,            0x65},  /* F3 */
+   { RETROK_F4,            0x66},  /* F4 */
+   { RETROK_F5,            0x67},  /* F5 */
+   { RETROK_F6,            0x68},  /* F6 */
+   { RETROK_F7,            0x69},  /* F7 */
+   { RETROK_F8,            0x6a},  /* F8 */
+   { RETROK_F9,            0x6b},  /* F9 */
+   { RETROK_F10,           0x6c},  /* F10 */
+
+#if 0
+   { NC,                   0x6d }, /* unused */
+   { NC,                   0x6e }, /* unused */
+   { NC,                   0x6f }, /* unused */
+#endif
+
+   { RETROK_LSHIFT,        0x70 }, /* SHIFT */
+   { RETROK_RSHIFT,        0x70 }, /* SHIFT */
+   { RETROK_LCTRL,         0x71 }, /* CTRL */
+   { RETROK_RCTRL,         0x71 }, /* CTRL */
+   { RETROK_LSUPER,        0x72 }, /* OPT.1 */
+   { RETROK_RSUPER,        0x73 }, /* OPT.2 */
+   { RETROK_LALT,          0x72 }, /* OPT.1 */
+   { RETROK_RALT,          0x73 }, /* OPT.2 */
+};
 
 static void handle_retrok(void)
 {
    int i;
+
+#define KEYP(a, b)                                                         \
+   {                                                                       \
+      if (Core_Key_State[a] && Core_Key_State[a] != Core_old_Key_State[a]) \
+         send_keycode(b, 2);                                               \
+      else if (!Core_Key_State[a] && Core_Key_State[a] != Core_old_Key_State[a]) \
+         send_keycode(b, 1);                                               \
+   }
+
    if(Core_Key_State[RETROK_F12] && Core_Key_State[RETROK_F12]!=Core_old_Key_State[RETROK_F12]  )
    {
       if (menu_mode == menu_out)
@@ -1767,114 +1918,15 @@ static void handle_retrok(void)
       }
    }
 
-   KEYP(RETROK_ESCAPE,0x1);
-   for(i = 1; i < 10; i++)
-      KEYP(RETROK_0 + i, 0x1 + i);
-   KEYP(RETROK_0,0xb);
-   KEYP(RETROK_MINUS,0xc);
-   KEYP(RETROK_QUOTE,0x28); /* colon : */
-   KEYP(RETROK_BACKSPACE,0xf);
-
-   KEYP(RETROK_TAB,0x10);
-   KEYP(RETROK_q,0x11);
-   KEYP(RETROK_w,0x12);
-   KEYP(RETROK_e,0x13);
-   KEYP(RETROK_r,0x14);
-   KEYP(RETROK_t,0x15);
-   KEYP(RETROK_y,0x16);
-   KEYP(RETROK_u,0x17);
-   KEYP(RETROK_i,0x18);
-   KEYP(RETROK_o,0x19);
-   KEYP(RETROK_p,0x1A);
-   KEYP(RETROK_BACKQUOTE,0x1B);
-   KEYP(RETROK_LEFTBRACKET,0x1C);
-   KEYP(RETROK_RETURN,0x1d);
-   KEYP(RETROK_EQUALS,0xd); /* caret ^ */
-
-   KEYP(RETROK_a,0x1e);
-   KEYP(RETROK_s,0x1f);
-   KEYP(RETROK_d,0x20);
-   KEYP(RETROK_f,0x21);
-   KEYP(RETROK_g,0x22);
-   KEYP(RETROK_h,0x23);
-   KEYP(RETROK_j,0x24);
-   KEYP(RETROK_k,0x25);
-   KEYP(RETROK_l,0x26);
-   KEYP(RETROK_SEMICOLON,0x27);
-   KEYP(RETROK_BACKSLASH,0xe); /* Yen symbol ¥ */
-   KEYP(RETROK_RIGHTBRACKET,0x29);
-
-   KEYP(RETROK_z,0x2a);
-   KEYP(RETROK_x,0x2b);
-   KEYP(RETROK_c,0x2c);
-   KEYP(RETROK_v,0x2d);
-   KEYP(RETROK_b,0x2e);
-   KEYP(RETROK_n,0x2f);
-   KEYP(RETROK_m,0x30);
-   KEYP(RETROK_COMMA,0x31);
-   KEYP(RETROK_PERIOD,0x32);
-   KEYP(RETROK_SLASH,0x33);
-   KEYP(RETROK_0,0x34); /* underquote _ as shift+0 which was empty, Japanese
-                           chars can't overlap as we're not using them */
-
-   KEYP(RETROK_SPACE,0x35);
-   KEYP(RETROK_HOME,0x36);
-   KEYP(RETROK_DELETE,0x37);
-   KEYP(RETROK_PAGEDOWN,0x38);
-   KEYP(RETROK_PAGEUP,0x39);
-   KEYP(RETROK_END,0x3a);
-   KEYP(RETROK_LEFT,0x3b);
-   KEYP(RETROK_UP,0x3c);
-   KEYP(RETROK_RIGHT,0x3d);
-   KEYP(RETROK_DOWN,0x3e);
-
-   KEYP(RETROK_CLEAR,0x3f);
-   KEYP(RETROK_KP_DIVIDE,0x40);
-   KEYP(RETROK_KP_MULTIPLY,0x41);
-   KEYP(RETROK_KP_MINUS,0x42);
-   KEYP(RETROK_KP7,0x43);
-   KEYP(RETROK_KP8,0x44);
-   KEYP(RETROK_KP9,0x45);
-   KEYP(RETROK_KP_PLUS,0x46);
-   KEYP(RETROK_KP4,0x47);
-   KEYP(RETROK_KP5,0x48);
-   KEYP(RETROK_KP6,0x49);
-   KEYP(RETROK_KP_EQUALS,0x4a);
-   KEYP(RETROK_KP1,0x4b);
-   KEYP(RETROK_KP2,0x4c);
-   KEYP(RETROK_KP3,0x4d);
-   KEYP(RETROK_KP_ENTER,0x4e);
-   KEYP(RETROK_KP0,0x4f);
-#if 0
-   KEYP(RETROK_COMMA,0x50);
-#endif
-   KEYP(RETROK_KP_PERIOD,0x51);
-
-   KEYP(RETROK_PRINT,0x52); /* symbol input (kigou) */
-   KEYP(RETROK_SCROLLOCK,0x53); /* registration (touroku) */
-   KEYP(RETROK_F11,0x54); /* help */
+   for (i = 0; i < NELEMENTS(KeyTable); i++)
+      KEYP(KeyTable[i].lrkey, KeyTable[i].keycode);
 
    /* only process kb_to_joypad map when its not zero, else button is used as
     * joypad select mode */
    if (Config.joy1_select_mapping)
       KEYP(RETROK_XFX, Config.joy1_select_mapping);
 
-   KEYP(RETROK_CAPSLOCK,0x5d);
-   KEYP(RETROK_INSERT,0x5e);
-   KEYP(RETROK_BREAK,0x61); /* break */
-   KEYP(RETROK_PAUSE,0x61); /* break (allow shift+break combo) */
-
-   for(i = 0; i < 10; i++)
-      KEYP(RETROK_F1 + i, 0x63 + i);
-
-   KEYP(RETROK_LSHIFT,0x70);
-   KEYP(RETROK_RSHIFT,0x70);
-   KEYP(RETROK_LCTRL,0x71);
-   KEYP(RETROK_RCTRL,0x71);
-   KEYP(RETROK_LSUPER,0x72);
-   KEYP(RETROK_RSUPER,0x73);
-   KEYP(RETROK_LALT,0x72);
-   KEYP(RETROK_RALT,0x73);
+#undef KEYP
 }
 
 #define CLOCK_SLICE 200
@@ -2026,7 +2078,7 @@ static void WinX68k_Exec(void)
             {
                /* LowReso 512dot
                 * draw twice per scanline (interlace) */
-               WinDraw_DrawLine();			
+               WinDraw_DrawLine();
                VLINE++;
                WinDraw_DrawLine();
             }
@@ -2148,7 +2200,7 @@ void retro_run(void)
 
    if (     (menu_mode == menu_out)
          && (  Config.AudioDesyncHack
-            || Config.NoWaitMode 
+            || Config.NoWaitMode
             || Timer_GetCount()))
    {
       Joystick_Update(0, -1, 0);
@@ -2192,7 +2244,7 @@ void retro_run(void)
    Core_Key_State[RETROK_XFX] = 0;
 
    /* Joypad Key for Menu */
-   if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L2))	
+   if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_L2))
       Core_Key_State[RETROK_F12] = 0x80;
 
    if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0, RETRO_DEVICE_ID_JOYPAD_R2))  /*Joypad key for touroku key in order to enable MIDI when preseed on start up in Wolfteam games*/
@@ -2202,7 +2254,7 @@ void retro_run(void)
    {
       /* Joypad Key for Mapping */
       if (input_state_cb(0, RETRO_DEVICE_JOYPAD,0,
-               RETRO_DEVICE_ID_JOYPAD_SELECT))	
+               RETRO_DEVICE_ID_JOYPAD_SELECT))
          Core_Key_State[RETROK_XFX] = 0x80;
    }
 

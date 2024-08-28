@@ -161,7 +161,7 @@ struct retro_vfs_interface_info vfs_iface_info;
 
 static unsigned no_content;
 
-static int opt_rumble_enabled = 1;
+static bool opt_rumble_enabled = false;
 
 #define MAX_DISKS 10
 
@@ -1399,9 +1399,9 @@ static void update_variables(int running)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "disabled"))
-         opt_rumble_enabled = 0;
+         opt_rumble_enabled = false;
       if (!strcmp(var.value, "enabled"))
-         opt_rumble_enabled = 1;
+         opt_rumble_enabled = true;
    }
 
    /* PX68K Menu */

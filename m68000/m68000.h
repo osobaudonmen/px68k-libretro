@@ -2,7 +2,7 @@
 
 	m68000.c
 
-	M68000 CPU¥¤¥ó¥¿¥Õ¥§¡¼¥¹´Ø¿ô
+	M68000 CPUï¿½ï¿½ï¿½ó¥¿¥Õ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¿ï¿½
 
 ******************************************************************************/
 
@@ -21,7 +21,7 @@
 #include "musashi/m68kcpu.h"
 #endif /* HAVE_C68K */ /* HAVE_MUSASHI */
 
-/* MAME¸ß´¹¤Î¥ì¥¸¥¹¥¿ÈÖ¹æ (°ìÉôÌ¤ÂÐ±þ) */
+/* MAMEï¿½ß´ï¿½ï¿½Î¥ì¥¸ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ (ï¿½ï¿½ï¿½ï¿½Ì¤ï¿½Ð±ï¿½) */
 enum
 {
 	/* NOTE: M68K_SP fetches the current SP, be it USP, ISP, or MSP */
@@ -31,6 +31,9 @@ enum
 	M68K_A0, M68K_A1, M68K_A2, M68K_A3, M68K_A4, M68K_A5, M68K_A6, M68K_A7
 };
 
+extern	int	m68000_ICountBk;
+extern	int	ICount;
+
 void m68000_init(void);
 void m68000_reset(void);
 void m68000_exit(void);
@@ -39,7 +42,6 @@ int  m68000_execute(int cycles);
 void m68000_set_irq_line(int irqline, int state);
 uint32_t  m68000_get_reg(int regnum);
 void m68000_set_reg(int regnum, uint32_t val);
-
 
 #ifdef SAVE_STATE
 STATE_SAVE( m68000 );

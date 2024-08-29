@@ -30,8 +30,6 @@ static int Mcry_SampleCnt      = 0;
 static uint8_t Mcry_Vector     = 255;
 
 extern uint32_t BusErrFlag;
-extern	m68k_regs regs;
-
 
 uint32_t FASTCALL Mcry_IntCB(uint8_t irq)
 {
@@ -244,7 +242,7 @@ void Mcry_SetVolume(uint8_t vol)
 }
 
 /*
- *   初期化〜
+ *   初期化~
  */
 void Mcry_Init(const char* path)
 {

@@ -25,7 +25,6 @@
 #include "libretro/mouse.h"
 #include "libretro/winui.h"
 #include "fmgen/fmg_wrap.h"
-#include "x68k/m68000.h" /* xxx perhaps not needed */
 #include "m68000/m68000.h"
 #include "x68k/adpcm.h"
 #include "x68k/fdd.h"

@@ -90,7 +90,7 @@ uint8_t FASTCALL SRAM_Read(uint32_t adr)
 
 void FASTCALL SRAM_Write(uint32_t adr, uint8_t data)
 {
-	if ( write_enabled )
+	if ( write_enabled && (adr < 0xed4000) )
 	{
 		adr       &= 0xffff;
 #ifndef MSB_FIRST

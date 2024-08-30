@@ -10,6 +10,7 @@
 #include	"x68kmemory.h"
 #include	"sram.h"
 
+static int write_enabled = 0;
 uint8_t	SRAM[0x4000];
 
 void SRAM_VirusCheck(void)
@@ -22,10 +23,21 @@ void SRAM_VirusCheck(void)
 	}
 }
 
+void SRAM_WriteEnable(int enable)
+{
+	if (write_enabled != enable)
+	{
+		log_cb(RETRO_LOG_DEBUG, "sram write enable = %d\n", enable);
+		write_enabled = enable;
+	}
+}
+
 void SRAM_Init(void)
 {
 	int i;
 	void *fp;
+
+	write_enabled = 0;
 
 	for (i=0; i<0x4000; i++)
 		SRAM[i] = 0xFF;
@@ -78,7 +90,7 @@ uint8_t FASTCALL SRAM_Read(uint32_t adr)
 
 void FASTCALL SRAM_Write(uint32_t adr, uint8_t data)
 {
-	if ( (SysPort[5]==0x31)&&(adr<0xed4000) )
+	if ( write_enabled )
 	{
 		adr       &= 0xffff;
 #ifndef MSB_FIRST

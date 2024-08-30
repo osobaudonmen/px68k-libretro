@@ -1887,12 +1887,18 @@ static void handle_retrok(void)
 {
    int i;
 
-#define KEYP(a, b)                                                         \
-   {                                                                       \
-      if (Core_Key_State[a] && Core_Key_State[a] != Core_old_Key_State[a]) \
-         send_keycode(b, 2);                                               \
+#define KEYP(a, b)                                                            \
+   {                                                                          \
+      if (Core_Key_State[a] && Core_Key_State[a] != Core_old_Key_State[a])    \
+      {                                                                       \
+         log_cb(RETRO_LOG_DEBUG, "KeyDown: lrkey = %3d code = %02x\n", a, b); \
+         send_keycode(b, 2);                                                  \
+      }                                                                       \
       else if (!Core_Key_State[a] && Core_Key_State[a] != Core_old_Key_State[a]) \
-         send_keycode(b, 1);                                               \
+      {                                                                       \
+         log_cb(RETRO_LOG_DEBUG, "KeyUp: lrkey = %3d code = %02x\n", a, b);   \
+         send_keycode(b, 1);                                                  \
+      }                                                                       \
    }
 
    if(Core_Key_State[RETROK_F12] && Core_Key_State[RETROK_F12]!=Core_old_Key_State[RETROK_F12]  )
@@ -1917,14 +1923,36 @@ static void handle_retrok(void)
       }
    }
 
-   for (i = 0; i < NELEMENTS(KeyTable); i++)
-      KEYP(KeyTable[i].lrkey, KeyTable[i].keycode);
-
+   if (Core_Key_State[RETROK_COMPOSE])
+   {
+      static const LRKCNV KeyTable1[] = {
+         { RETROK_F1,      0x55 }, /* XF1 */
+         { RETROK_F2,      0x56 }, /* XF2 */
+         { RETROK_F3,      0x57 }, /* XF3 */
+         { RETROK_F4,      0x58 }, /* XF4 */
+         { RETROK_F5,      0x59 }, /* XF5 */
+         { RETROK_F6,      0x5a }, /* KANA */
+         { RETROK_F7,      0x5b }, /* ROMAN Alphabet */
+         { RETROK_F8,      0x5c }, /* Enter code */
+         { RETROK_F9,      0x5f }, /* Hiragana */
+         { RETROK_F10,     0x60 }, /* Full-width */
+      };
+      int i;
+      for (i = 0; i < NELEMENTS(KeyTable1); i++)
+      {
+         KEYP(KeyTable1[i].lrkey, KeyTable1[i].keycode);
+      }
+   }
+   else
+   {
+      for (i = 0; i < NELEMENTS(KeyTable); i++)
+         KEYP(KeyTable[i].lrkey, KeyTable[i].keycode);
+   }
+   
    /* only process kb_to_joypad map when its not zero, else button is used as
     * joypad select mode */
    if (Config.joy1_select_mapping)
       KEYP(RETROK_XFX, Config.joy1_select_mapping);
-
 #undef KEYP
 }
 

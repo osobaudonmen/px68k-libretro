@@ -155,6 +155,8 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "Default (2 Buttons)",  "Défaut (2 Boutons)" },
          { "CPSF-MD (8 Buttons)",  "CPSF-MD (8 Boutons)" },
          { "CPSF-SFC (8 Buttons)", "CPSF-SFC (8 Boutons)" },
+         { "Cyberstick (Digital)", NULL },
+         { "Cyberstick (Analog)",  NULL },
          { NULL,                   NULL },
       },
       "Default (2 Buttons)"

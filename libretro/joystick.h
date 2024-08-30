@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "common.h"
 
+#define PAD_2BUTTON      0
+#define PAD_CPSF_MD      1
+#define PAD_CPSF_SFC     2
+#define PAD_CYBERSTICK_D 3
+#define PAD_CYBERSTICK_A 4
+
 #define	JOY_UP		0x01
 #define	JOY_DOWN	0x02
 #define	JOY_LEFT	0x04
@@ -17,6 +23,10 @@
 #define	JOY_TRG7	0x08
 #define	JOY_TRG8	0x20
 #define	JOY_TRG6	0x40
+
+/* button combination for start/select button */
+#define JOY_SELECT      0x03 /* up + down */
+#define JOY_START       0x0c /* left + right */
 
 void Joystick_Init(void);
 void Joystick_Cleanup(void);

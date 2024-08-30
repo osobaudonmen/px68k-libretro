@@ -1216,12 +1216,22 @@ static void update_variables(int running)
       var.value = NULL;
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       {
+         int val = Config.JOY_TYPE[i];
          if (!(strcmp(var.value, "Default (2 Buttons)")))
-            Config.JOY_TYPE[i] = 0;
+            Config.JOY_TYPE[i] = PAD_2BUTTON;
          else if (!(strcmp(var.value, "CPSF-MD (8 Buttons)")))
-            Config.JOY_TYPE[i] = 1;
+            Config.JOY_TYPE[i] = PAD_CPSF_MD;
          else if (!(strcmp(var.value, "CPSF-SFC (8 Buttons)")))
-            Config.JOY_TYPE[i] = 2;
+            Config.JOY_TYPE[i] = PAD_CPSF_SFC;
+         else if (!(strcmp(var.value, "Cyberstick (Digital)")))
+            Config.JOY_TYPE[i] = PAD_CYBERSTICK_D;
+         else if (!(strcmp(var.value, "Cyberstick (Analog)")))
+            Config.JOY_TYPE[i] = PAD_CYBERSTICK_A;
+         if (Config.JOY_TYPE[i] != val)
+         {
+            log_cb(RETRO_LOG_DEBUG, "player: %d type: %d\n", i + 1, Config.JOY_TYPE[i]);
+            Joystick_Init();
+         }
       }
    }
 

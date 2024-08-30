@@ -8,7 +8,6 @@ extern	uint8_t	Debug_Text, Debug_Grp, Debug_Sp;
 
 extern char cur_dir_str[];
 extern size_t cur_dir_slen;
-extern int speedup_joy[0xff];
 
 void WinUI_Init(void);
 int WinUI_Menu(int first);

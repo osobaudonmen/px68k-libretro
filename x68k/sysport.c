@@ -4,76 +4,94 @@
 
 #include "common.h"
 #include "prop.h"
+#include "sram.h"
 #include "sysport.h"
 #include "palette.h"
 
-uint8_t	SysPort[7];
+typedef struct
+{
+	uint8_t contrast;
+	uint8_t monitor;
+	uint8_t keyctrl;
+	uint8_t cputype;
+} SYSPORT;
+
+static SYSPORT sysport;
 
 void SysPort_Init(void)
 {
-	int i;
-	for (i=0; i<7; i++)
-      SysPort[i]=0;
-}
+	static uint8_t cputype[] = {
+		0xff, /* 68000, 10Mhz */
+		0xfe,
+		0xfe, /* 68020, 16Mgz */
+		0xdc  /* 68030, 25Mhz */
+	};
 
-void FASTCALL SysPort_Write(uint32_t adr, uint8_t data)
-{
-	switch(adr)
-	{
-	case 0xe8e001:
-		if (SysPort[1]!=(data&15))
-		{
-			SysPort[1] = data & 15;
-			Pal_ChangeContrast(SysPort[1]);
-		}
-		break;
-	case 0xe8e003:
-		SysPort[2] = data & 0x0b;
-		break;
-	case 0xe8e005:
-		SysPort[3] = data & 0x1f;
-		break;
-	case 0xe8e007:
-		SysPort[4] = data & 0x0e;
-		break;
-	case 0xe8e00d:
-		SysPort[5] = data;
-		break;
-	case 0xe8e00f:
-		SysPort[6] = data & 15;
-		break;
-	}
+	sysport.contrast = 0;
+	sysport.monitor = 0;
+	sysport.cputype = cputype[Config.XVIMode & 3];
 }
 
 uint8_t FASTCALL SysPort_Read(uint32_t adr)
 {
-	switch(adr)
+	if (adr & 1)
 	{
-	case 0xe8e001:
-		return SysPort[1];
-	case 0xe8e003:
-		return SysPort[2];
-	case 0xe8e005:
-		return SysPort[3];
-	case 0xe8e007:
-		return SysPort[4];
-	case 0xe8e00b:
-		switch(Config.XVIMode)
+		adr &= 0x0f;
+		adr >>= 1;
+
+		switch (adr)
 		{
-		case 1:			/* XVI or RedZone */
-		case 2:
-			return 0xfe;
-		case 3:			/* 030 */
-			return 0xdc;
-		default:		/* 10MHz */
-			break;
+		case 0: /* contrast */
+			return (0xf0 | sysport.contrast);
+		case 1: /* b3: monitor control, b0-b1 3d scope */
+			return (0xf0 | sysport.monitor);
+		case 3: /* b3: keyboard connec*ed */
+			return (0xf0 | sysport.keyctrl);
+		case 5:
+			return (0xf0 | sysport.cputype);
+		default:
+			/* unimplemented registers returns 0xff */
+			return 0xff;
 		}
-		break;
-	case 0xe8e00d:
-		return SysPort[5];
-	case 0xe8e00f:
-		return SysPort[6];
 	}
 
 	return 0xff;
 }
+
+void FASTCALL SysPort_Write(uint32_t adr, uint8_t data)
+{
+	if (adr & 1)
+	{
+		adr &= 0x0f;
+		adr >>= 1;
+
+		switch (adr)
+		{
+		case 0:
+			data &= 0x0f;
+			if (sysport.contrast != data)
+			{
+				sysport.contrast = data;
+				Pal_ChangeContrast(data);
+			}
+			break;
+		case 1:
+			data &= 0x0b;
+			sysport.monitor = data;
+			break;
+		case 3:
+			data &= 0xe0;
+			sysport.keyctrl = data;
+			break;
+		case 6:
+			if (data == 0x31)
+				SRAM_WriteEnable(1);
+			else
+				SRAM_WriteEnable(0);
+			break;
+		default:
+			break;
+		}
+	}
+}
+

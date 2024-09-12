@@ -1042,7 +1042,7 @@ static int pmain(int argc, char *argv[])
             break;
          case 0:
             /* start menu when running without content */
-            menu_mode = menu_enter;
+            /* menu_mode = menu_enter; */
             break;
       }
    }

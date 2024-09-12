@@ -66,6 +66,8 @@
 
 #include "fmg_wrap.h"
 
+#include <file/file_path.h>
+
 #ifdef _WIN32
 #define SLASH '\\'
 #else
@@ -200,7 +202,8 @@ static void menu_create_flist(int v)
 		{
 			Config.HDImage[drv - 2][0] = '\0';
 		}
-		strcpy(mfl.dir[drv], cur_dir_str);
+		/* retain last directory used upon eject */
+      /* strcpy(mfl.dir[drv], cur_dir_str); */
 		return;
 	}
 
@@ -337,7 +340,8 @@ static void menu_create_flist(int v)
       }
       else
          Config.HDImage[drv - 2][0] = '\0';
-      strcpy(mfl.dir[drv], cur_dir_str);
+      /* retain last directory used upon eject */
+      /* strcpy(mfl.dir[drv], cur_dir_str); */
       return;
    }
 

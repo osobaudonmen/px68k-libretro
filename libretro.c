@@ -97,8 +97,10 @@ static char RPATH[512];
 static char RETRO_DIR[512];
 static const char *retro_save_directory;
 static const char *retro_system_directory;
+static const char *retro_browse_directory;
 const char *retro_content_directory;
-char retro_system_conf[512];
+char retro_system_conf[512]; /* system directory path */
+char retro_browse_conf[512]; /* file browser default path */
 char base_dir[MAX_PATH];
 
 static uint8_t Core_Key_State[512];
@@ -958,6 +960,7 @@ void WinX68k_Reset(void)
    DSound_Play();
 }
 
+extern char filepath[MAX_PATH];
 static int pmain(int argc, char *argv[])
 {
 	strcpy(winx68k_dir, retro_system_conf);
@@ -966,6 +969,10 @@ static int pmain(int argc, char *argv[])
    file_setcd(winx68k_dir);
 
    LoadConfig();
+
+   /* if available, use retro_browse_conf to set StartDir config */
+   if (retro_browse_conf[0] != 0)
+      strcpy(filepath, retro_browse_conf);
 
    if (!WinDraw_MenuInit())
    {
@@ -1775,6 +1782,10 @@ void retro_init(void)
    const char *system_dir      = NULL;
    const char *content_dir     = NULL;
    const char *save_dir        = NULL;
+   const char *browse_dir = NULL;
+
+   retro_system_conf[0] = 0;
+   retro_browse_conf[0] = 0;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
       log_cb = log.log;
@@ -1795,6 +1806,10 @@ void retro_init(void)
    else
       /* make retro_save_directory the same in case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY is not implemented by the frontend */
       retro_save_directory = retro_system_directory;
+   
+   /* If browse directory is defined use it for StartDir config */
+   if (environ_cb(RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY, &browse_dir) && browse_dir)
+      retro_browse_directory = browse_dir;
 
    if (!retro_system_directory)
       strcpy(RETRO_DIR, ".");
@@ -1802,6 +1817,9 @@ void retro_init(void)
       strcpy(RETRO_DIR, retro_system_directory);
 
    sprintf(retro_system_conf, "%s%ckeropi", RETRO_DIR, SLASH);
+
+   if (retro_browse_directory)
+      strcpy(retro_browse_conf, retro_browse_directory);
 
    if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
       exit(0);

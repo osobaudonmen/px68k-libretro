@@ -945,6 +945,7 @@ void WinX68k_Reset(void)
    Pal_Init();
    IRQH_Init();
    MIDI_Init();
+   Keyboard_Init();
 
    m68000_ICountBk = 0;
    ICount = 0;

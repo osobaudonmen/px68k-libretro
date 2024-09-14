@@ -1515,6 +1515,39 @@ static void update_variables(int running)
       else if (!strcmp(var.value, "enabled"))
          Config.AudioDesyncHack = 1;
    }
+
+   var.key   = "px68k_text_off";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "disabled"))
+         Debug_Text = 1;
+      else if (!strcmp(var.value, "enabled"))
+         Debug_Text = 0;
+   }
+
+   var.key   = "px68k_grp_off";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "disabled"))
+         Debug_Grp = 1;
+      else if (!strcmp(var.value, "enabled"))
+         Debug_Grp = 0;
+   }
+
+   var.key   = "px68k_sp_off";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "disabled"))
+         Debug_Sp = 1;
+      else if (!strcmp(var.value, "enabled"))
+         Debug_Sp = 0;
+   }
 }
 
 /************************************
@@ -2459,3 +2492,4 @@ void retro_run(void)
    /* TODO/FIXME - hardcoded pitch here */
    video_cb(videoBuffer, retrow, retroh, /*retrow*/ 800 << 1);
 }
+

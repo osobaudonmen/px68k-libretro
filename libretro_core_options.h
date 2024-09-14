@@ -454,6 +454,48 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "disabled"
    },
+   {
+      "px68k_text_off",
+      "Text Off",
+      NULL,
+      "TODO:",
+      NULL,
+      "advanced",
+      {
+         { "disabled", NULL},
+         { "enabled",  NULL},
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
+      "px68k_grp_off",
+      "Grp Off",
+      NULL,
+      "TODO:",
+      NULL,
+      "advanced",
+      {
+         { "disabled", NULL},
+         { "enabled",  NULL},
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
+      "px68k_sp_off",
+      "SP/BG Off",
+      NULL,
+      "TODO:",
+      NULL,
+      "advanced",
+      {
+         { "disabled", NULL},
+         { "enabled",  NULL},
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
 
    { NULL, NULL, NULL, NULL, NULL, NULL, { 0, 0 }, NULL },
 };

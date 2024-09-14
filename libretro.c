@@ -1782,7 +1782,7 @@ void retro_init(void)
    const char *system_dir      = NULL;
    const char *content_dir     = NULL;
    const char *save_dir        = NULL;
-   const char *browse_dir = NULL;
+   const char *browse_dir      = NULL;
 
    retro_system_conf[0] = 0;
    retro_browse_conf[0] = 0;

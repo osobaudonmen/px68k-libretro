@@ -171,6 +171,8 @@ void CRTC_Init(void)
 
 static void CRTC_ScreenChanged(void)
 {
+   static int last_vidmode = -1;
+
 	if ((CRTC_Regs[0x29] & 0x14) == 0x10)
 	{
 		TextDotY /= 2;
@@ -183,6 +185,14 @@ static void CRTC_ScreenChanged(void)
 	}
 	else
 		CRTC_VStep = 2;
+   
+   VID_MODE = !!(CRTC_Regs[0x29]&0x10);
+   
+   if (VID_MODE != last_vidmode)
+   {
+      last_vidmode = VID_MODE;
+      CHANGEAV_TIMING = 1;
+   }
 }
 
 uint8_t FASTCALL CRTC_Read(uint32_t adr)
@@ -211,7 +221,6 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
    };
 
    uint8_t reg     = (uint8_t)(adr&0x3f);
-   int old_vidmode = VID_MODE;
    if (adr<0xe80400)
    {
       if ( reg>=0x30 ) return;
@@ -268,7 +277,6 @@ void FASTCALL CRTC_Write(uint32_t adr, uint8_t data)
             break;
          case 0x29:
             HSYNC_CLK = ((CRTC_Regs[0x29]&0x10)?VSYNC_HIGH:VSYNC_NORM)/VLINE_TOTAL;
-            VID_MODE = !!(CRTC_Regs[0x29]&0x10);
             TextDotY = CRTC_VEND-CRTC_VSTART;
             CRTC_ScreenChanged();
             break;

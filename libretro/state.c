@@ -209,7 +209,6 @@ static bool SubWrite(StateMem *st, SFORMAT *sf)
    while(sf->size || sf->name)	
    {
       int32_t bytesize;
-      char nameo[1 + 256];
 
       if(!sf->size || !sf->v)
       {
@@ -228,9 +227,18 @@ static bool SubWrite(StateMem *st, SFORMAT *sf)
       }
 
       bytesize = sf->size;
-      nameo[0] = strlcpy(nameo + 1, sf->name, 256);
 
-      smem_write(st, nameo, 1 + nameo[0]);
+      /* exclude text labels from fast savestates */
+      if (!st->fastsavestates)
+      {
+         char nameo[1 + 256];
+         int slen      = strlcpy(nameo + 1, sf->name, 255);
+         nameo[256]    = 0;
+         nameo[0]      = slen;
+
+         smem_write(st, nameo, 1 + nameo[0]);
+      }
+
       smem_write32le(st, bytesize);
 
 #ifdef MSB_FIRST
@@ -295,7 +303,8 @@ static int WriteStateChunk(StateMem *st, const char *sname, SFORMAT *sf)
 
    smem_write(st, sname_tmp, 32);
 
-   smem_write32le(st, 0);                // We'll come back and write this later.
+   /* We'll come back and write this later. */
+   smem_write32le(st, 0);
 
    data_start_pos = st->loc;
 
@@ -311,7 +320,7 @@ static int WriteStateChunk(StateMem *st, const char *sname, SFORMAT *sf)
    return(end_pos - data_start_pos);
 }
 
-static SFORMAT *FindSF(const char *name, SFORMAT *sf)
+static SFORMAT *FindSF(const char *name, SFORMAT *sf, bool FastSaveStates)
 {
    /* Size can sometimes be zero, so also check for the text name.  
     * These two should both be zero only at the end of a struct. */
@@ -326,12 +335,18 @@ static SFORMAT *FindSF(const char *name, SFORMAT *sf)
       /* Link to another SFORMAT structure. */
       if (sf->size == (uint32_t)~0) 
       {
-         SFORMAT *temp_sf = FindSF(name, (SFORMAT*)sf->v);
+         SFORMAT *temp_sf = FindSF(name, (SFORMAT*)sf->v, FastSaveStates);
          if (temp_sf)
             return temp_sf;
       }
       else
       {
+         /* for fast savestates, we no longer have the 
+          * text label in the state, and need to assume 
+          * that it is the correct one. */
+         if (FastSaveStates)
+            return sf;
+
          if (!strcmp(sf->name, name))
             return sf;
       }
@@ -346,25 +361,39 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
 {
    int temp = st->loc;
 
+   uint32_t recorded_size;  /* In bytes */
+   uint8_t toa[1 + 256];    /* Don't change to char unless 
+                               cast toa[0] to unsigned to 
+                               smem_read() and other places. */
+   toa[0] = 0;
+   toa[1] = 0;
+
    while (st->loc < (temp + size))
    {
-      /* Don't change to char unless cast 
-       * toa[0] to unsigned to smem_read() 
-       * and other places. */
-      uint8_t toa[1 + 256];	
-      uint32_t recorded_size = 0;	/* In bytes */
       SFORMAT *tmp           = NULL;
 
-      if(smem_read(st, toa, 1) != 1)
-         return(0);
+      /* exclude text labels from fast savestates */
+      if (!st->fastsavestates)
+      {
 
-      if(smem_read(st, toa + 1, toa[0]) != toa[0])
-         return 0;
+         if(smem_read(st, toa, 1) != 1)
+            return(0);
 
-      toa[1 + toa[0]] = 0;
+         if(smem_read(st, toa + 1, toa[0]) != toa[0])
+            return 0;
+
+         toa[1 + toa[0]] = 0;
+      }
 
       smem_read32le(st, &recorded_size);
-      tmp = FindSF((char*)toa + 1, sf);
+
+      tmp = FindSF((char*)toa + 1, sf, st->fastsavestates);
+
+      /* Fix for unnecessary name checks, when we find 
+       * it in the first slot, don't recheck that slot again.
+       * Also necessary for fast savestates to work. */
+      if (tmp == sf)
+         sf++;
 
       if(tmp)
       {

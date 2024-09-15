@@ -1656,6 +1656,15 @@ int StateAction(StateMem *sm, int load, int data_only)
    return ret;
 }
 
+static bool UsingFastSavestates(void)
+{
+   int flags;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT, &flags))
+      return ((flags == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_INSTANCE) ||
+            ((flags == RETRO_SAVESTATE_CONTEXT_RUNAHEAD_SAME_BINARY)));
+   return false;
+}
+
 size_t retro_serialize_size(void)
 {
    StateMem st;
@@ -1665,6 +1674,7 @@ size_t retro_serialize_size(void)
    st.len            = 0;
    st.malloced       = 0;
    st.initial_malloc = 0;
+   st.fastsavestates = 0;
 
    if (!PX68KSS_SaveSM(&st, 0, 0, NULL, NULL, NULL))
       return 0;
@@ -1688,6 +1698,7 @@ bool retro_serialize(void *data, size_t size)
    st.len            = 0;
    st.malloced       = size;
    st.initial_malloc = 0;
+   st.fastsavestates = UsingFastSavestates();
 
    ret = PX68KSS_SaveSM(&st, 0, 0, NULL, NULL, NULL);
 
@@ -1700,14 +1711,18 @@ bool retro_serialize(void *data, size_t size)
 bool retro_unserialize(const void *data, size_t size)
 {
    StateMem st;
+   bool ret = false;
 
    st.data           = (uint8_t*)data;
    st.loc            = 0;
    st.len            = size;
    st.malloced       = 0;
    st.initial_malloc = 0;
+   st.fastsavestates = UsingFastSavestates();
 
-   return PX68KSS_LoadSM(&st, 0, 0);
+   ret = PX68KSS_LoadSM(&st, 0, 0);
+
+   return ret;
 }
 
 /* TODO/FIXME - implement cheats */

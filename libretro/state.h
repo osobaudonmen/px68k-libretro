@@ -19,6 +19,11 @@ typedef struct
    uint32_t len;
    uint32_t malloced;
    uint32_t initial_malloc; /* A setting! */
+
+   /* Fast Save States exclude string labels from variables in the savestate, and are at least 20% faster.
+    * Only used for internal savestates which will not be written to a file.
+    */
+   bool fastsavestates;
 } StateMem;
 
 #ifdef __cplusplus

@@ -39,6 +39,7 @@ extern int VID_MODE, CHANGEAV_TIMING;
 
 int CRTC_StateAction(StateMem *sm, int load, int data_only)
 {
+   int vidmode, ret; 
 	SFORMAT StateRegs[] =
 	{
 		SFARRAY(CRTC_Regs, 48),
@@ -68,10 +69,25 @@ int CRTC_StateAction(StateMem *sm, int load, int data_only)
       SFARRAY(VCReg1, 2),
       SFARRAY(VCReg2, 2),
 
+      SFVAR(vidmode),
+
 		SFEND
 	};
 
-	int ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_CRTC_VCTRL", false);
+   if (!load)
+      vidmode = VID_MODE;
+
+	ret = PX68KSS_StateAction(sm, load, data_only, StateRegs, "X68K_CRTC_VCTRL", false);
+
+   if (load)
+   {
+      if (VID_MODE != vidmode)
+      {
+         CHANGEAV_TIMING = 1;
+         VID_MODE = vidmode;
+         
+      }
+   }
 
 	return ret;
 }

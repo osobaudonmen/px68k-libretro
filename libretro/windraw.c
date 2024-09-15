@@ -97,20 +97,20 @@ void FASTCALL WinDraw_Draw(void)
 
 #define WD_MEMCPY(src) memcpy(&ScrBuf[adr], (src), TextDotX * 2)
 
-#define WD_LOOP(start, end, sub)			\
-{ 							\
-	for (i = (start); i < (end); i++, adr++) {	\
-		sub();					\
-	}						\
-}
+#define WD_LOOP(start, end, sub)                 \
+	{                                            \
+		for (i = (start); i < (end); i++, adr++) \
+		{                                        \
+			sub();                               \
+		}                                        \
+	}
 
-#define WD_SUB(SUFFIX, src)			\
-{						\
-	w = (src);				\
-	if (w != 0)				\
-		ScrBuf##SUFFIX[adr] = w;	\
-}
-
+#define WD_SUB(SUFFIX, src)          \
+	{                                \
+		w = (src);                   \
+		if (w != 0)                  \
+			ScrBuf##SUFFIX[adr] = w; \
+	}
 
 static INLINE void WinDraw_DrawGrpLine(int opaq)
 {
@@ -145,12 +145,14 @@ static INLINE void WinDraw_DrawGrpLineNonSP(int opaq)
 static INLINE void WinDraw_DrawTextLine(int opaq, int td)
 {
 #define _DTL_SUB2(SUFFIX) WD_SUB(SUFFIX, BG_LineBuf[i])
-#define _DTL_SUB(SUFFIX)		\
-{					\
-	if (Text_TrFlag[i] & 1) {	\
-		_DTL_SUB2(SUFFIX);	\
-	}				\
-}	
+
+#define _DTL_SUB(SUFFIX)        \
+	{                           \
+		if (Text_TrFlag[i] & 1) \
+		{                       \
+			_DTL_SUB2(SUFFIX);  \
+		}                       \
+	}
 
 	uint32_t adr = VLINE*FULLSCREEN_WIDTH;
 	uint16_t w;
@@ -169,45 +171,51 @@ static INLINE void WinDraw_DrawTextLine(int opaq, int td)
 
 static INLINE void WinDraw_DrawTextLineTR(int opaq)
 {
-#define _DTL_TR_SUB(SUFFIX)			   \
-{						   \
-	w = Grp_LineBufSP[i - 16];		   \
-	if (w != 0) {				   \
-		w &= Pal_HalfMask;		   \
-		v = BG_LineBuf[i];		   \
-		if (v & Ibit)			   \
-			w += Pal_Ix2;		   \
-		v &= Pal_HalfMask;		   \
-		v += w;				   \
-		v >>= 1;			   \
-	} else {				   \
-		if (Text_TrFlag[i] & 1)		   \
-			v = BG_LineBuf[i];	   \
-		else				   \
-			v = 0;			   \
-	}					   \
-	ScrBuf##SUFFIX[adr] = (uint16_t)v;		   \
-}
+#define _DTL_TR_SUB(SUFFIX)                \
+	{                                      \
+		w = Grp_LineBufSP[i - 16];         \
+		if (w != 0)                        \
+		{                                  \
+			w &= Pal_HalfMask;             \
+			v = BG_LineBuf[i];             \
+			if (v & Ibit)                  \
+				w += Pal_Ix2;              \
+			v &= Pal_HalfMask;             \
+			v += w;                        \
+			v >>= 1;                       \
+		}                                  \
+		else                               \
+		{                                  \
+			if (Text_TrFlag[i] & 1)        \
+				v = BG_LineBuf[i];         \
+			else                           \
+				v = 0;                     \
+		}                                  \
+		ScrBuf##SUFFIX[adr] = (uint16_t)v; \
+	}
 
-#define _DTL_TR_SUB2(SUFFIX)			   \
-{						   \
-	if (Text_TrFlag[i] & 1) {		   \
-		w = Grp_LineBufSP[i - 16];	   \
-		v = BG_LineBuf[i];		   \
-						   \
-		if (v != 0) {			   \
-			if (w != 0) {			\
-				w &= Pal_HalfMask;	\
-				if (v & Ibit)		\
-					w += Pal_Ix2;	\
-				v &= Pal_HalfMask;	\
-				v += w;			\
-				v >>= 1;		\
-			}				\
-			ScrBuf##SUFFIX[adr] = (uint16_t)v;	\
-		}					\
-	}						\
-}
+#define _DTL_TR_SUB2(SUFFIX)                       \
+	{                                              \
+		if (Text_TrFlag[i] & 1)                    \
+		{                                          \
+			w = Grp_LineBufSP[i - 16];             \
+			v = BG_LineBuf[i];                     \
+                                                   \
+			if (v != 0)                            \
+			{                                      \
+				if (w != 0)                        \
+				{                                  \
+					w &= Pal_HalfMask;             \
+					if (v & Ibit)                  \
+						w += Pal_Ix2;              \
+					v &= Pal_HalfMask;             \
+					v += w;                        \
+					v >>= 1;                       \
+				}                                  \
+				ScrBuf##SUFFIX[adr] = (uint16_t)v; \
+			}                                      \
+		}                                          \
+	}
 
 	uint32_t adr = VLINE*FULLSCREEN_WIDTH;
 	uint32_t v;
@@ -224,12 +232,14 @@ static INLINE void WinDraw_DrawTextLineTR(int opaq)
 static INLINE void WinDraw_DrawBGLine(int opaq, int td)
 {
 #define _DBL_SUB2(SUFFIX) WD_SUB(SUFFIX, BG_LineBuf[i])
-#define _DBL_SUB(SUFFIX)			 \
-{						 \
-	if (Text_TrFlag[i] & 2) {		 \
-		_DBL_SUB2(SUFFIX); \
-	} \
-}
+
+#define _DBL_SUB(SUFFIX)        \
+	{                           \
+		if (Text_TrFlag[i] & 2) \
+		{                       \
+			_DBL_SUB2(SUFFIX);  \
+		}                       \
+	}
 
 	uint32_t adr = VLINE*FULLSCREEN_WIDTH;
 	uint16_t w;
@@ -248,40 +258,42 @@ static INLINE void WinDraw_DrawBGLine(int opaq, int td)
 
 static INLINE void WinDraw_DrawBGLineTR(int opaq)
 {
+#define _DBL_TR_SUB3()         \
+	{                          \
+		if (w != 0)            \
+		{                      \
+			w &= Pal_HalfMask; \
+			if (v & Ibit)      \
+				w += Pal_Ix2;  \
+			v &= Pal_HalfMask; \
+			v += w;            \
+			v >>= 1;           \
+		}                      \
+	}
 
-#define _DBL_TR_SUB3()			\
-{					\
-	if (w != 0) {			\
-		w &= Pal_HalfMask;	\
-		if (v & Ibit)		\
-			w += Pal_Ix2;	\
-		v &= Pal_HalfMask;	\
-		v += w;			\
-		v >>= 1;		\
-	}				\
-}
+#define _DBL_TR_SUB(SUFFIX)                \
+	{                                      \
+		w = Grp_LineBufSP[i - 16];         \
+		v = BG_LineBuf[i];                 \
+                                           \
+		_DBL_TR_SUB3()                     \
+		ScrBuf##SUFFIX[adr] = (uint16_t)v; \
+	}
 
-#define _DBL_TR_SUB(SUFFIX) \
-{					\
-	w = Grp_LineBufSP[i - 16];	\
-	v = BG_LineBuf[i];		\
-					\
-	_DBL_TR_SUB3()			\
-	ScrBuf##SUFFIX[adr] = (uint16_t)v;	\
-}
-
-#define _DBL_TR_SUB2(SUFFIX) \
-{							\
-	if (Text_TrFlag[i] & 2) {  			\
-		w = Grp_LineBufSP[i - 16];		\
-		v = BG_LineBuf[i];			\
-							\
-		if (v != 0) {				\
-			_DBL_TR_SUB3()			\
-			ScrBuf##SUFFIX[adr] = (uint16_t)v;	\
-		}					\
-	}						\
-}
+#define _DBL_TR_SUB2(SUFFIX)                       \
+	{                                              \
+		if (Text_TrFlag[i] & 2)                    \
+		{                                          \
+			w = Grp_LineBufSP[i - 16];             \
+			v = BG_LineBuf[i];                     \
+                                                   \
+			if (v != 0)                            \
+			{                                      \
+				_DBL_TR_SUB3()                     \
+				ScrBuf##SUFFIX[adr] = (uint16_t)v; \
+			}                                      \
+		}                                          \
+	}
 
 	uint32_t adr = VLINE*FULLSCREEN_WIDTH;
 	uint32_t v;
@@ -514,9 +526,7 @@ void WinDraw_DrawLine(void)
 		}
 	}
 
-
 	opaq = 1;
-
 
 	/* Pri = 2 or 3（最下位）に設定されている画面を表示
 	 * プライオリティが同じ場合は、GRP<SP<TEXT？（ドラスピ、桃伝、YsIII等）
@@ -526,152 +536,154 @@ void WinDraw_DrawLine(void)
 	 * KnightArmsとかを見ると、半透明のベースプレーンは一番上になるみたい…。
 	 */
 
-		if ( (VCReg1[0]&0x02) )
-		{
-			if (gon)
-			{
-				WinDraw_DrawGrpLine(opaq);
-				opaq = 0;
-			}
-			if (tron)
-			{
-				WinDraw_DrawGrpLineNonSP(opaq);
-				opaq = 0;
-			}
-		}
-		if ( (VCReg1[0]&0x20)&&(bgon) )
-		{
-			if ( ((VCReg2[0]&0x5d)==0x1d)&&((VCReg1[0]&0x03)!=0x02)&&(tron) )
-			{
-				if ( (VCReg1[0]&3)<((VCReg1[0]>>2)&3) )
-				{
-					WinDraw_DrawBGLineTR(opaq);
-					tdrawed = 1;
-					opaq = 0;
-				}
-			}
-			else
-			{
-				WinDraw_DrawBGLine(opaq, /*0*/tdrawed);
-				tdrawed = 1;
-				opaq = 0;
-			}
-		}
-		if ( (VCReg1[0]&0x08)&&(ton) )
-		{
-			if ( ((VCReg2[0]&0x5d)==0x1d)&&((VCReg1[0]&0x03)!=0x02)&&(tron) )
-				WinDraw_DrawTextLineTR(opaq);
-			else
-				WinDraw_DrawTextLine(opaq, tdrawed/*((VCReg1[0]&0x30)>=0x20)*/);
-			opaq = 0;
-			tdrawed = 1;
-		}
-
-		/* Pri = 1（2番目）に設定されている画面を表示 */
-		if ( ((VCReg1[0]&0x03)==0x01)&&(gon) )
+	if ( (VCReg1[0]&0x02) )
+	{
+		if (gon)
 		{
 			WinDraw_DrawGrpLine(opaq);
 			opaq = 0;
 		}
-		if ( ((VCReg1[0]&0x30)==0x10)&&(bgon) )
+		if (tron)
 		{
-			if ( ((VCReg2[0]&0x5d)==0x1d)&&(!(VCReg1[0]&0x03))&&(tron) )
+			WinDraw_DrawGrpLineNonSP(opaq);
+			opaq = 0;
+		}
+	}
+	if ( (VCReg1[0]&0x20)&&(bgon) )
+	{
+		if ( ((VCReg2[0]&0x5d)==0x1d)&&((VCReg1[0]&0x03)!=0x02)&&(tron) )
+		{
+			if ( (VCReg1[0]&3)<((VCReg1[0]>>2)&3) )
 			{
-				if ( (VCReg1[0]&3)<((VCReg1[0]>>2)&3) )
-				{
-					WinDraw_DrawBGLineTR(opaq);
-					tdrawed = 1;
-					opaq = 0;
-				}
-			}
-			else
-			{
-				WinDraw_DrawBGLine(opaq, ((VCReg1[0]&0xc)==0x8));
+				WinDraw_DrawBGLineTR(opaq);
 				tdrawed = 1;
 				opaq = 0;
 			}
 		}
-		if ( ((VCReg1[0]&0x0c)==0x04) && ((VCReg2[0]&0x5d)==0x1d) && (VCReg1[0]&0x03) && (((VCReg1[0]>>4)&3)>(VCReg1[0]&3)) && (bgon) && (tron) )
+		else
 		{
-			WinDraw_DrawBGLineTR(opaq);
+			WinDraw_DrawBGLine(opaq, /*0*/tdrawed);
 			tdrawed = 1;
 			opaq = 0;
-			if (tron)
+		}
+	}
+	if ( (VCReg1[0]&0x08)&&(ton) )
+	{
+		if ( ((VCReg2[0]&0x5d)==0x1d)&&((VCReg1[0]&0x03)!=0x02)&&(tron) )
+			WinDraw_DrawTextLineTR(opaq);
+		else
+			WinDraw_DrawTextLine(opaq, tdrawed/*((VCReg1[0]&0x30)>=0x20)*/);
+		opaq = 0;
+		tdrawed = 1;
+	}
+
+	/* Pri = 1（2番目）に設定されている画面を表示 */
+	if ( ((VCReg1[0]&0x03)==0x01)&&(gon) )
+	{
+		WinDraw_DrawGrpLine(opaq);
+		opaq = 0;
+	}
+	if ( ((VCReg1[0]&0x30)==0x10)&&(bgon) )
+	{
+		if ( ((VCReg2[0]&0x5d)==0x1d)&&(!(VCReg1[0]&0x03))&&(tron) )
+		{
+			if ( (VCReg1[0]&3)<((VCReg1[0]>>2)&3) )
 			{
-				WinDraw_DrawGrpLineNonSP(opaq);
+				WinDraw_DrawBGLineTR(opaq);
+				tdrawed = 1;
+				opaq = 0;
 			}
 		}
-		else if ( ((VCReg1[0]&0x03)==0x01)&&(tron)&&(gon)&&(VCReg2[0]&0x10) )
+		else
+		{
+			WinDraw_DrawBGLine(opaq, ((VCReg1[0]&0xc)==0x8));
+			tdrawed = 1;
+			opaq = 0;
+		}
+	}
+	if ( ((VCReg1[0]&0x0c)==0x04) && ((VCReg2[0]&0x5d)==0x1d) && (VCReg1[0]&0x03) && (((VCReg1[0]>>4)&3)>(VCReg1[0]&3)) && (bgon) && (tron) )
+	{
+		WinDraw_DrawBGLineTR(opaq);
+		tdrawed = 1;
+		opaq = 0;
+		if (tron)
 		{
 			WinDraw_DrawGrpLineNonSP(opaq);
-			opaq = 0;
 		}
-		if ( ((VCReg1[0]&0x0c)==0x04)&&(ton) )
-		{
-			if ( ((VCReg2[0]&0x5d)==0x1d)&&(!(VCReg1[0]&0x03))&&(tron) )
-				WinDraw_DrawTextLineTR(opaq);
-			else
-				WinDraw_DrawTextLine(opaq, ((VCReg1[0]&0x30)>=0x10));
-			opaq = 0;
-			tdrawed = 1;
-		}
+	}
+	else if ( ((VCReg1[0]&0x03)==0x01)&&(tron)&&(gon)&&(VCReg2[0]&0x10) )
+	{
+		WinDraw_DrawGrpLineNonSP(opaq);
+		opaq = 0;
+	}
+	if ( ((VCReg1[0]&0x0c)==0x04)&&(ton) )
+	{
+		if ( ((VCReg2[0]&0x5d)==0x1d)&&(!(VCReg1[0]&0x03))&&(tron) )
+			WinDraw_DrawTextLineTR(opaq);
+		else
+			/* FIXME: Verify corrent td param here. Games like Overdriver
+			 * expect a td value of 1 here, yet the condition
+			 * ((VCReg1[0]&0x30)>=0x10) returns 0 for this game causing
+			 * grp > text. See stage 2 of the game. */
+			WinDraw_DrawTextLine(opaq, ((VCReg1[0]&0x30)>=0x10));
+		opaq = 0;
+		tdrawed = 1;
+	}
 
-		/* Pri = 0（最優先）に設定されている画面を表示 */
-		if ( (!(VCReg1[0]&0x03))&&(gon) )
-		{
-			WinDraw_DrawGrpLine(opaq);
-			opaq = 0;
-		}
-		if ( (!(VCReg1[0]&0x30))&&(bgon) )
-		{
-			WinDraw_DrawBGLine(opaq, /*tdrawed*/((VCReg1[0]&0xc)>=0x4));
-			tdrawed = 1;
-			opaq = 0;
-		}
-		if ( (!(VCReg1[0]&0x0c)) && ((VCReg2[0]&0x5d)==0x1d) && (((VCReg1[0]>>4)&3)>(VCReg1[0]&3)) && (bgon) && (tron) )
-		{
-			WinDraw_DrawBGLineTR(opaq);
-			tdrawed = 1;
-			opaq = 0;
-			if (tron)
-			{
-				WinDraw_DrawGrpLineNonSP(opaq);
-			}
-		}
-		else if ( (!(VCReg1[0]&0x03))&&(tron)&&(VCReg2[0]&0x10) )
+	/* Pri = 0（最優先）に設定されている画面を表示 */
+	if ( (!(VCReg1[0]&0x03))&&(gon) )
+	{
+		WinDraw_DrawGrpLine(opaq);
+		opaq = 0;
+	}
+	if ( (!(VCReg1[0]&0x30))&&(bgon) )
+	{
+		WinDraw_DrawBGLine(opaq, /*tdrawed*/((VCReg1[0]&0xc)>=0x4));
+		tdrawed = 1;
+		opaq = 0;
+	}
+	if ( (!(VCReg1[0]&0x0c)) && ((VCReg2[0]&0x5d)==0x1d) && (((VCReg1[0]>>4)&3)>(VCReg1[0]&3)) && (bgon) && (tron) )
+	{
+		WinDraw_DrawBGLineTR(opaq);
+		tdrawed = 1;
+		opaq = 0;
+		if (tron)
 		{
 			WinDraw_DrawGrpLineNonSP(opaq);
-			opaq = 0;
 		}
-		if ( (!(VCReg1[0]&0x0c))&&(ton) )
-		{
-			WinDraw_DrawTextLine(opaq, 1);
-			tdrawed = 1;
-			opaq = 0;
-		}
+	}
+	else if ( (!(VCReg1[0]&0x03))&&(tron)&&(VCReg2[0]&0x10) )
+	{
+		WinDraw_DrawGrpLineNonSP(opaq);
+		opaq = 0;
+	}
+	if ( (!(VCReg1[0]&0x0c))&&(ton) )
+	{
+		WinDraw_DrawTextLine(opaq, 1);
+		tdrawed = 1;
+		opaq = 0;
+	}
 
-		/* 特殊プライオリティ時のグラフィック */
-		if ( ((VCReg2[0]&0x5c)==0x14)&&(pron) )	/* 特殊Pri時は、対象プレーンビットは意味が無いらしい（ついんびー） */
-		{
-			WinDraw_DrawPriLine();
-		}
-		else if ( ((VCReg2[0]&0x5d)==0x1c)&&(tron) )	/* 半透明時に全てが透明なドットをハーフカラーで埋める */
-		{						/* （AQUALES） */
+	/* 特殊プライオリティ時のグラフィック */
+	if ( ((VCReg2[0]&0x5c)==0x14)&&(pron) )	/* 特殊Pri時は、対象プレーンビットは意味が無いらしい（ついんびー） */
+	{
+		WinDraw_DrawPriLine();
+	}
+	else if ( ((VCReg2[0]&0x5d)==0x1c)&&(tron) )	/* 半透明時に全てが透明なドットをハーフカラーで埋める */
+	{						/* （AQUALES） */
+#define _DL_SUB(SUFFIX)                                    \
+	{                                                      \
+		w = Grp_LineBufSP[i];                              \
+		if (w != 0 && (ScrBuf##SUFFIX[adr] & 0xffff) == 0) \
+			ScrBuf##SUFFIX[adr] = (w & Pal_HalfMask) >> 1; \
+	}
 
-#define _DL_SUB(SUFFIX) \
-{								\
-	w = Grp_LineBufSP[i];					\
-	if (w != 0 && (ScrBuf##SUFFIX[adr] & 0xffff) == 0)	\
-		ScrBuf##SUFFIX[adr] = (w & Pal_HalfMask) >> 1;	\
-}
+		uint32_t adr = VLINE*FULLSCREEN_WIDTH;
+		uint16_t w;
+		int i;
 
-			uint32_t adr = VLINE*FULLSCREEN_WIDTH;
-			uint16_t w;
-			int i;
-
-			WD_LOOP(0, TextDotX, _DL_SUB);
-		}
-
+		WD_LOOP(0, TextDotX, _DL_SUB);
+	}
 
 	if (opaq)
 	{

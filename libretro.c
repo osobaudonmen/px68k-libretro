@@ -108,6 +108,10 @@ static uint8_t Core_old_Key_State[512];
 
 static bool joypad1, joypad2;
 
+static bool j2m_move = 0;
+static double j2m_ac = 0.1;
+static double j2m_ve = 1.0;
+
 static bool opt_analog;
 
 static char CMDFILE[512];
@@ -2428,13 +2432,61 @@ void retro_run(void)
       WinX68k_Exec();
    }
 
-   mouse_x       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-   mouse_y       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+   if (!Config.JoyOrMouse) {
+       mouse_x = mouse_y = 0;
+
+       int j2m_u = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP);
+       int j2m_d = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN);
+       int j2m_l = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT);
+       int j2m_r = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT);
+       int j2m_a = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A);
+       int j2m_b = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B);
+       if (j2m_u || j2m_d || j2m_l || j2m_r) {
+           if (!j2m_move) {
+               j2m_ve = 1.0;
+           }
+           j2m_move = 1;
+       } else {
+           j2m_move = 0;
+       }
+       if (j2m_move) {
+           if (j2m_u) {
+               if (j2m_l) {
+                   mouse_x = -j2m_ve;
+                   mouse_y = -j2m_ve;
+               } else if (j2m_r) {
+                   mouse_x =  j2m_ve;
+                   mouse_y = -j2m_ve;
+               } else {
+                   mouse_y = -j2m_ve / 1.414;
+               }
+           } else if(j2m_d) {
+               if (j2m_l) {
+                   mouse_x = -j2m_ve;
+                   mouse_y =  j2m_ve;
+               } else if (j2m_r) {
+                   mouse_x =  j2m_ve;
+                   mouse_y =  j2m_ve;
+               } else {
+                   mouse_y =  j2m_ve / 1.414;
+               }
+           } else if(j2m_l) {
+               mouse_x = -j2m_ve / 1.414;
+           } else if(j2m_r) {
+               mouse_x =  j2m_ve / 1.414;
+           }
+           j2m_ve += j2m_ac;
+       }
+       mouse_r = j2m_a ? 1 : 0;
+       mouse_l = j2m_b ? 1 : 0;
+   } else {
+       mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+       mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+       mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+       mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+   }
 
    Mouse_Event(0, mouse_x, mouse_y);
-
-   mouse_l       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-   mouse_r       = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
 
    if(!mbL && mouse_l)
    {

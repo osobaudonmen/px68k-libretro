@@ -2426,8 +2426,10 @@ void retro_run(void)
             || Config.NoWaitMode
             || Timer_GetCount()))
    {
-      Joystick_Update(0, -1, 0);
-      Joystick_Update(0, -1, 1);
+      if (Config.JoyOrMouse) {
+          Joystick_Update(0, -1, 0);
+          Joystick_Update(0, -1, 1);
+      }
 
       WinX68k_Exec();
    }
@@ -2451,29 +2453,14 @@ void retro_run(void)
        }
        if (j2m_move) {
            if (j2m_u) {
-               if (j2m_l) {
-                   mouse_x = -j2m_ve;
-                   mouse_y = -j2m_ve;
-               } else if (j2m_r) {
-                   mouse_x =  j2m_ve;
-                   mouse_y = -j2m_ve;
-               } else {
-                   mouse_y = -j2m_ve / 1.414;
-               }
+               mouse_y = -j2m_ve;
            } else if(j2m_d) {
-               if (j2m_l) {
-                   mouse_x = -j2m_ve;
-                   mouse_y =  j2m_ve;
-               } else if (j2m_r) {
-                   mouse_x =  j2m_ve;
-                   mouse_y =  j2m_ve;
-               } else {
-                   mouse_y =  j2m_ve / 1.414;
-               }
-           } else if(j2m_l) {
-               mouse_x = -j2m_ve / 1.414;
+               mouse_y =  j2m_ve;
+           }
+           if(j2m_l) {
+               mouse_x = -j2m_ve;
            } else if(j2m_r) {
-               mouse_x =  j2m_ve / 1.414;
+               mouse_x =  j2m_ve;
            }
            j2m_ve += j2m_ac;
        }

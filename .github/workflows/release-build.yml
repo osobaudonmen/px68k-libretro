@@ -1,108 +1,129 @@
-name: Build Distribution Release
+name: PX68K Libretro Core - Build and Release
 
 on:
   push:
     branches: [ custom ]
 
+env:
+  CORE_NAME: px68k_libretro
+  BUILD_OPTIONS: C68K=1
+
 jobs:
-  create-release:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
     
-    # Linuxビルド
-    - name: Build Linux x64 core
+    - name: Setup build environment
       run: |
-        make -j$(getconf _NPROCESSORS_ONLN) C68K=1
+        sudo apt update
+        sudo apt install -y mingw-w64 zip
+        mkdir -p dist
+    
+    - name: Build Linux x64
+      run: |
+        make clean
+        make -j$(nproc) ${{ env.BUILD_OPTIONS }}
         mkdir -p dist/linux-x64
-        cp px68k_libretro.so dist/linux-x64/
-        cp README.MD dist/linux-x64/
-        cp COPYING dist/linux-x64/
-        cd dist
-        zip -r px68k-libretro-linux-x64.zip linux-x64/
+        cp ${{ env.CORE_NAME }}.so dist/linux-x64/
     
-    # Windowsビルド（mingw-w64を使用）
-    - name: Install mingw-w64
-      run: sudo apt update && sudo apt install -y mingw-w64
-    - name: Build Windows x64 core
+    - name: Build Windows x64
       run: |
-        make -j8 C68K=1 platform=wincross64
+        make clean
+        make -j$(nproc) ${{ env.BUILD_OPTIONS }} platform=wincross64
         mkdir -p dist/windows-x64
-        cp px68k_libretro.dll dist/windows-x64/
-        cp README.MD dist/windows-x64/
-        cp COPYING dist/windows-x64/
-        cd dist
-        zip -r px68k-libretro-windows-x64.zip windows-x64/
+        cp ${{ env.CORE_NAME }}.dll dist/windows-x64/
     
-    # Androidビルド
     - name: Setup Android NDK
       uses: nttld/setup-ndk@v1
       with:
-        ndk-version: r21e
+        ndk-version: r25c
+    
     - name: Build Android cores
       run: |
         cd libretro/jni
-        $ANDROID_NDK_HOME/ndk-build APP_ABI="armeabi-v7a arm64-v8a x86 x86_64" -j$(getconf _NPROCESSORS_ONLN)
+        $ANDROID_NDK_HOME/ndk-build clean
+        $ANDROID_NDK_HOME/ndk-build APP_ABI="armeabi-v7a arm64-v8a x86 x86_64" -j$(nproc)
         cd ../..
         
-        # Create separate directories for each ABI
-        mkdir -p dist/android-armeabi-v7a
-        mkdir -p dist/android-arm64-v8a
-        mkdir -p dist/android-x86
-        mkdir -p dist/android-x86_64
-        
-        # Copy files with unified names
-        cp libretro/libs/armeabi-v7a/libretro.so dist/android-armeabi-v7a/px68k_libretro.so
-        cp README.MD dist/android-armeabi-v7a/
-        cp COPYING dist/android-armeabi-v7a/
-        
-        cp libretro/libs/arm64-v8a/libretro.so dist/android-arm64-v8a/px68k_libretro.so
-        cp README.MD dist/android-arm64-v8a/
-        cp COPYING dist/android-arm64-v8a/
-        
-        cp libretro/libs/x86/libretro.so dist/android-x86/px68k_libretro.so
-        cp README.MD dist/android-x86/
-        cp COPYING dist/android-x86/
-        
-        cp libretro/libs/x86_64/libretro.so dist/android-x86_64/px68k_libretro.so
-        cp README.MD dist/android-x86_64/
-        cp COPYING dist/android-x86_64/
-        
+        # Create Android distribution directories
+        for abi in armeabi-v7a arm64-v8a x86 x86_64; do
+          mkdir -p "dist/android-${abi}"
+          cp "libretro/libs/${abi}/libretro.so" "dist/android-${abi}/${{ env.CORE_NAME }}.so"
+        done
+    
+    - name: Copy documentation files
+      run: |
+        # Copy documentation to all platform directories
+        for dir in dist/*/; do
+          cp README.MD COPYING "${dir}"
+        done
+    
+    - name: Create distribution archives
+      run: |
         cd dist
-        zip -r px68k-libretro-android-armeabi-v7a.zip android-armeabi-v7a/
-        zip -r px68k-libretro-android-arm64-v8a.zip android-arm64-v8a/
-        zip -r px68k-libretro-android-x86.zip android-x86/
-        zip -r px68k-libretro-android-x86_64.zip android-x86_64/
+        for dir in */; do
+          if [ -d "$dir" ]; then
+            platform=$(basename "$dir")
+            zip -r "${{ env.CORE_NAME }}-${platform}.zip" "$dir"
+          fi
+        done
+    
+    - name: Verify build artifacts
+      run: |
+        echo "Build verification:"
+        ls -la dist/
+        echo ""
+        echo "Archive contents:"
+        for archive in dist/*.zip; do
+          if [ -f "$archive" ]; then
+            echo "=== $(basename "$archive") ==="
+            unzip -l "$archive" | head -10
+            echo ""
+          fi
+        done
     
     - name: Create release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: custom-build-${{ github.sha }}
-        name: PX68K Libretro Core - Custom Build ${{ github.sha }}
+        tag_name: build-${{ github.run_number }}-${{ github.sha }}
+        name: ${{ env.CORE_NAME }} - Build #${{ github.run_number }}
         body: |
-          Precompiled PX68K libretro cores for distribution
+          **PX68K Libretro Core - Automated Build**
           
-          Built from commit: ${{ github.sha }}
-          Branch: custom
+          📋 **Build Information:**
+          - Commit: `${{ github.sha }}`
+          - Branch: `${{ github.ref_name }}`
+          - Build Number: `#${{ github.run_number }}`
+          - Build Date: `${{ github.event.head_commit.timestamp }}`
           
-          **Included platforms:**
-          - Linux x64
-          - Windows x64  
-          - Android armeabi-v7a
-          - Android arm64-v8a
-          - Android x86
-          - Android x86_64
-        files: |
-          dist/px68k-libretro-linux-x64.zip
-          dist/px68k-libretro-windows-x64.zip
-          dist/px68k-libretro-android-armeabi-v7a.zip
-          dist/px68k-libretro-android-arm64-v8a.zip
-          dist/px68k-libretro-android-x86.zip
-          dist/px68k-libretro-android-x86_64.zip
+          🎯 **Supported Platforms:**
+          - Linux x64 (`${{ env.CORE_NAME }}-linux-x64.zip`)
+          - Windows x64 (`${{ env.CORE_NAME }}-windows-x64.zip`)
+          - Android ARM v7a (`${{ env.CORE_NAME }}-android-armeabi-v7a.zip`)
+          - Android ARM64 v8a (`${{ env.CORE_NAME }}-android-arm64-v8a.zip`)
+          - Android x86 (`${{ env.CORE_NAME }}-android-x86.zip`)
+          - Android x86_64 (`${{ env.CORE_NAME }}-android-x86_64.zip`)
+          
+          📦 Each archive contains the core library, README, and license files.
+        files: dist/${{ env.CORE_NAME }}-*.zip
         draft: false
         prerelease: true
+        fail_on_unmatched_files: true
     
-    - name: Delete old releases
+    - name: Cleanup old releases
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # 最新のリリース以外を削除（タグも一緒に削除される）
-        gh release list --limit 100 | grep -v "custom-build-${{ github.sha }}" | awk '{print $1}' | xargs -I {} gh release delete {} --yes
+        # Keep only the latest 5 releases to avoid clutter
+        echo "Cleaning up old releases (keeping latest 5)..."
+        releases=$(gh release list --limit 50 --json tagName,createdAt --jq '.[] | select(.tagName | startswith("build-")) | .tagName' | tail -n +6)
+        
+        for tag in $releases; do
+          if [ -n "$tag" ] && [ "$tag" != "build-${{ github.run_number }}-${{ github.sha }}" ]; then
+            echo "Deleting release: $tag"
+            gh release delete "$tag" --yes --cleanup-tag || echo "Failed to delete $tag (might not exist)"
+          fi
+        done

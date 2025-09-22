@@ -12,9 +12,7 @@ px68k-libretro のフォーク版
 
 ダウンロード
 
-GitHub Actions のワークフローで自動的にコアファイルをビルドしています。  
-[ワークフローの一覧](https://github.com/osobaudonmen/px68k-libretro/actions/workflows/release-build.yml) から最新の結果ページにアーティファクトとして添付されています。    
-ただし、ワークフローの結果を90日間しか保存しないように設定しているため、しばらくコミットがなかったら消えると思います。
+[リリースページ](https://github.com/osobaudonmen/px68k-libretro/releases) からダウンロードしてください。
 
 以下、オリジナルのREADME.mdを掲載しています。
 

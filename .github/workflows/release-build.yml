@@ -87,7 +87,7 @@ jobs:
     - name: Create release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: build-${{ github.run_number }}-${{ github.sha }}
+        tag_name: "build-${{ github.run_id }}"
         name: "Auto Build #${{ github.run_number }}"
         body: |
           **PX68K Libretro Core - Automated Build**

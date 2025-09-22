@@ -21,24 +21,12 @@ jobs:
         cd dist
         zip -r px68k-libretro-linux-x64.zip linux-x64/
     
-    # Windowsビルド（MSYS2を使用）
-    - uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: >-
-          base-devel
-          gcc
-          git
-          make
-          zip
-          mingw-w64-x86_64-toolchain
-          mingw-w64-x86_64-ntldd
-          mingw-w64-x86_64-zlib
-          mingw-w64-x86_64-pkg-config
+    # Windowsビルド（mingw-w64を使用）
+    - name: Install mingw-w64
+      run: sudo apt update && sudo apt install -y mingw-w64
     - name: Build Windows x64 core
-      shell: msys2 {0}
       run: |
-        make -j8 C68K=1
+        make -j8 C68K=1 platform=wincross64
         mkdir -p dist/windows-x64
         cp px68k_libretro.dll dist/windows-x64/
         cp README.MD dist/windows-x64/

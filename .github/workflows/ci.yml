@@ -1,5 +1,5 @@
 name: PX68K CI
-on: [push, pull_request]
+on: workflow_dispatch
 jobs:
   linux-c68k:
     runs-on: ubuntu-latest

@@ -57,6 +57,10 @@ void SRAM_Init(void)
 	for (i=0; i<0x4000; i++)
 		SRAM[i] = 0xFF;
 
+#if defined(__LIBRETRO__)
+    return;
+#endif
+
 	if ((fp = file_open_c("sram.dat")))
 	{
 		file_lread(fp, SRAM, 0x4000);

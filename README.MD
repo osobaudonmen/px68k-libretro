@@ -1,3 +1,23 @@
+px68k-libretro のフォーク版
+
+このリポジトリは、[px68k-libretro](https://github.com/libretro/px68k-libretro) のフォーク版です。
+自分が利用するために都合の良い改造しています。
+
+変更点
+
+- コアオプションのInputのJoy/MouseでJoystickを選んだら、ジョイパッドの入力をマウスの操作に変換するようにした  
+十字キーがカーソル移動、Bボタンが左クリック、Aボタンが右クリックになる
+- M3Uを使った起動時のクラッシュを回避するために毎回SRAMを初期化するようにした  
+参考: https://retropie.org.uk/forum/topic/31953/lr-px68k-multidisk-games-problem/13
+
+ダウンロード
+
+[リリースページ](https://github.com/osobaudonmen/px68k-libretro/releases) からダウンロードしてください。
+
+以下、オリジナルのREADME.mdを掲載しています。
+
+---
+
 px68k-libretro 
 
 forked from https://github.com/hissorii/px68k

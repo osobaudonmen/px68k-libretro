@@ -1,0 +1,129 @@
+name: PX68K Libretro Core - Build and Release
+
+on:
+  push:
+    branches: [ custom ]
+
+env:
+  CORE_NAME: px68k_libretro
+  BUILD_OPTIONS: C68K=1
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup build environment
+      run: |
+        sudo apt update
+        sudo apt install -y mingw-w64 zip
+        mkdir -p dist
+    
+    - name: Build Linux x64
+      run: |
+        make clean
+        make -j$(nproc) ${{ env.BUILD_OPTIONS }}
+        mkdir -p dist/linux-x64
+        cp ${{ env.CORE_NAME }}.so dist/linux-x64/
+    
+    - name: Build Windows x64
+      run: |
+        make clean
+        make -j$(nproc) ${{ env.BUILD_OPTIONS }} platform=wincross64
+        mkdir -p dist/windows-x64
+        cp ${{ env.CORE_NAME }}.dll dist/windows-x64/
+    
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r25c
+    
+    - name: Build Android cores
+      run: |
+        cd libretro/jni
+        $ANDROID_NDK_HOME/ndk-build clean
+        $ANDROID_NDK_HOME/ndk-build APP_ABI="armeabi-v7a arm64-v8a x86 x86_64" -j$(nproc)
+        cd ../..
+        
+        # Create Android distribution directories
+        for abi in armeabi-v7a arm64-v8a x86 x86_64; do
+          mkdir -p "dist/android-${abi}"
+          cp "libretro/libs/${abi}/libretro.so" "dist/android-${abi}/${{ env.CORE_NAME }}.so"
+        done
+    
+    - name: Copy documentation files
+      run: |
+        # Copy documentation to all platform directories
+        for dir in dist/*/; do
+          cp README.MD COPYING "${dir}"
+        done
+    
+    - name: Create distribution archives
+      run: |
+        cd dist
+        for dir in */; do
+          if [ -d "$dir" ]; then
+            platform=$(basename "$dir")
+            zip -r "${{ env.CORE_NAME }}-${platform}.zip" "$dir"
+          fi
+        done
+    
+    - name: Verify build artifacts
+      run: |
+        echo "Build verification:"
+        ls -la dist/
+        echo ""
+        echo "Archive contents:"
+        for archive in dist/*.zip; do
+          if [ -f "$archive" ]; then
+            echo "=== $(basename "$archive") ==="
+            unzip -l "$archive" | head -10
+            echo ""
+          fi
+        done
+    
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: "build-${{ github.run_id }}"
+        name: "Auto Build #${{ github.run_number }}"
+        body: |
+          **PX68K Libretro Core - Automated Build**
+          
+          📋 **Build Information:**
+          - Commit: `${{ github.sha }}`
+          - Branch: `${{ github.ref_name }}`
+          - Build Number: `#${{ github.run_number }}`
+          - Build Date: `${{ github.event.head_commit.timestamp }}`
+          
+          🎯 **Supported Platforms:**
+          - Linux x64 (`${{ env.CORE_NAME }}-linux-x64.zip`)
+          - Windows x64 (`${{ env.CORE_NAME }}-windows-x64.zip`)
+          - Android ARM v7a (`${{ env.CORE_NAME }}-android-armeabi-v7a.zip`)
+          - Android ARM64 v8a (`${{ env.CORE_NAME }}-android-arm64-v8a.zip`)
+          - Android x86 (`${{ env.CORE_NAME }}-android-x86.zip`)
+          - Android x86_64 (`${{ env.CORE_NAME }}-android-x86_64.zip`)
+          
+          📦 Each archive contains the core library, README, and license files.
+        files: dist/${{ env.CORE_NAME }}-*.zip
+        draft: false
+        prerelease: true
+        fail_on_unmatched_files: true
+    
+    - name: Cleanup old releases
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Keep only the latest 5 releases to avoid clutter
+        echo "Cleaning up old releases (keeping latest 5)..."
+        releases=$(gh release list --limit 50 --json tagName,createdAt --jq '.[] | select(.tagName | startswith("build-")) | .tagName' | tail -n +6)
+        
+        for tag in $releases; do
+          if [ -n "$tag" ] && [ "$tag" != "build-${{ github.run_number }}-${{ github.sha }}" ]; then
+            echo "Deleting release: $tag"
+            gh release delete "$tag" --yes --cleanup-tag || echo "Failed to delete $tag (might not exist)"
+          fi
+        done

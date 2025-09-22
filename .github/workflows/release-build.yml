@@ -5,10 +5,12 @@ on:
     branches: [ custom ]
 
 jobs:
-  build-linux-distribution:
+  create-release:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    
+    # Linuxビルド
     - name: Build Linux x64 core
       run: |
         make -j$(getconf _NPROCESSORS_ONLN) C68K=1
@@ -16,19 +18,10 @@ jobs:
         cp px68k_libretro.so dist/linux-x64/
         cp README.MD dist/linux-x64/
         cp COPYING dist/linux-x64/
-    - name: Archive Linux build
-      run: |
         cd dist
         zip -r px68k-libretro-linux-x64.zip linux-x64/
-    - name: Upload Linux artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: px68k-libretro-linux-x64
-        path: dist/px68k-libretro-linux-x64.zip
-
-  build-windows-distribution:
-    runs-on: windows-latest
-    steps:
+    
+    # Windowsビルド（MSYS2を使用）
     - uses: msys2/setup-msys2@v2
       with:
         update: true
@@ -42,7 +35,6 @@ jobs:
           mingw-w64-x86_64-ntldd
           mingw-w64-x86_64-zlib
           mingw-w64-x86_64-pkg-config
-    - uses: actions/checkout@v4
     - name: Build Windows x64 core
       shell: msys2 {0}
       run: |
@@ -51,21 +43,10 @@ jobs:
         cp px68k_libretro.dll dist/windows-x64/
         cp README.MD dist/windows-x64/
         cp COPYING dist/windows-x64/
-    - name: Archive Windows build
-      shell: msys2 {0}
-      run: |
         cd dist
         zip -r px68k-libretro-windows-x64.zip windows-x64/
-    - name: Upload Windows artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: px68k-libretro-windows-x64
-        path: dist/px68k-libretro-windows-x64.zip
-
-  build-android-distribution:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
+    
+    # Androidビルド
     - name: Setup Android NDK
       uses: nttld/setup-ndk@v1
       with:
@@ -98,48 +79,13 @@ jobs:
         cp libretro/libs/x86_64/libretro.so dist/android-x86_64/px68k_libretro.so
         cp README.MD dist/android-x86_64/
         cp COPYING dist/android-x86_64/
-    
-    - name: Archive Android builds
-      run: |
+        
         cd dist
         zip -r px68k-libretro-android-armeabi-v7a.zip android-armeabi-v7a/
         zip -r px68k-libretro-android-arm64-v8a.zip android-arm64-v8a/
         zip -r px68k-libretro-android-x86.zip android-x86/
         zip -r px68k-libretro-android-x86_64.zip android-x86_64/
     
-    - name: Upload Android artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: px68k-libretro-android-armeabi-v7a
-        path: dist/px68k-libretro-android-armeabi-v7a.zip
-    
-    - name: Upload Android arm64-v8a artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: px68k-libretro-android-arm64-v8a
-        path: dist/px68k-libretro-android-arm64-v8a.zip
-    
-    - name: Upload Android x86 artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: px68k-libretro-android-x86
-        path: dist/px68k-libretro-android-x86.zip
-    
-    - name: Upload Android x86_64 artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: px68k-libretro-android-x86_64
-        path: dist/px68k-libretro-android-x86_64.zip
-
-  create-release:
-    runs-on: ubuntu-latest
-    needs: [build-linux-distribution, build-windows-distribution, build-android-distribution]
-    steps:
-    - uses: actions/checkout@v4
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: dist/
     - name: Create release
       uses: softprops/action-gh-release@v1
       with:
@@ -159,11 +105,16 @@ jobs:
           - Android x86
           - Android x86_64
         files: |
-          dist/px68k-libretro-linux-x64/px68k-libretro-linux-x64.zip
-          dist/px68k-libretro-windows-x64/px68k-libretro-windows-x64.zip
-          dist/px68k-libretro-android-armeabi-v7a/px68k-libretro-android-armeabi-v7a.zip
-          dist/px68k-libretro-android-arm64-v8a/px68k-libretro-android-arm64-v8a.zip
-          dist/px68k-libretro-android-x86/px68k-libretro-android-x86.zip
-          dist/px68k-libretro-android-x86_64/px68k-libretro-android-x86_64.zip
+          dist/px68k-libretro-linux-x64.zip
+          dist/px68k-libretro-windows-x64.zip
+          dist/px68k-libretro-android-armeabi-v7a.zip
+          dist/px68k-libretro-android-arm64-v8a.zip
+          dist/px68k-libretro-android-x86.zip
+          dist/px68k-libretro-android-x86_64.zip
         draft: false
         prerelease: true
+    
+    - name: Delete old releases
+      run: |
+        # 最新のリリース以外を削除（タグも一緒に削除される）
+        gh release list --limit 100 | grep -v "custom-build-${{ github.sha }}" | awk '{print $1}' | xargs -I {} gh release delete {} --yes

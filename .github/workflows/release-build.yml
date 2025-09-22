@@ -88,7 +88,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: build-${{ github.run_number }}-${{ github.sha }}
-        name: ${{ env.CORE_NAME }} - Auto Build #${{ github.run_number }} (${{ github.event.head_commit.timestamp }})
+        name: "${{ env.CORE_NAME }} - Auto Build #${{ github.run_number }} (${{ github.event.head_commit.timestamp }})"
         body: |
           **PX68K Libretro Core - Automated Build**
           
